@@ -89,7 +89,7 @@ legend;
 %% 2a) OPTIMIZATION - SIMPLE SHOOTING
 clc; close;
 mu = constants.mu; constants.r0 = r0; constants.rf = rf;
-options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'active-set', 'ConstraintTolerance', 1e-10, 'OptimalityTolerance', 1e-10, 'SpecifyConstraintGradient', false, 'SpecifyObjectiveGradient', false, 'FiniteDifferenceStepSize', 1e-12, UseParallel=true);
+options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'active-set', 'ConstraintTolerance', 1e-10, 'OptimalityTolerance', 1e-10, 'SpecifyConstraintGradient', false, 'SpecifyObjectiveGradient', false, 'FiniteDifferenceStepSize', 1e-12);
 vars0 = [xx0; ti; tf];
 
 A = [0 0 0 0 1 -1];
@@ -470,8 +470,7 @@ C34_tf = C34_xxf * f_tf;
 dCeq = [C12_xxi, C12_ti, C12_tf;
         C34_xxi, C34_ti, C34_tf];
 
-% dC = [0 0 0 0 1 -1]';
-dC = [];
+dC = [0 0 0 0 1 -1]';
 dCeq = dCeq';
 
 end
@@ -932,4 +931,29 @@ thetaSun = atan2(S_pos(2, :), S_pos(1, :));
 thetaMoon = atan2(M_pos(2, :), M_pos(1, :));
 
 thetaFinderFun = mod(thetaSun - thetaMoon, 2*pi) - thetaTarget;
+end
+
+function plotSettings
+%-------------------------------------------------------------------------%
+% Settings for figure plots
+%-------------------------------------------------------------------------%
+
+% Setting Lines:
+set(0, 'defaultLineLineWidth', 1.6);
+set(0,'defaultLineMarkerSize', 4) ;
+set(0,'defaultLineMarkerEdgeColor', 'k')
+set(0,'defaultLineMarkerFaceColor', 'auto')
+% Setting Interpreter:
+set(0, 'defaultTextInterpreter', 'latex')
+set(0, 'defaultLegendInterpreter', 'latex')
+set(0, 'defaultAxesTickLabelInterpreter', 'latex')
+% Setting Legends:
+set(0, 'defaultLegendLocation','southwest');
+set(0, 'defaultLegendOrientation', 'vertical');
+set(0, 'defaultLegendFontSize', 12);
+% Setting Axes:
+set(0, 'defaultAxesXMinorGrid', 'on');
+set(0,'defaultAxesYMinorGrid','on');
+set(0, 'defaultAxesFontSize', 20);
+
 end

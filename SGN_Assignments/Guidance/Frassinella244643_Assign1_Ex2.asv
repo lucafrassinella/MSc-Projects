@@ -104,7 +104,7 @@ vars0 = [xx0; ti; tf];
 % Non-linear constraints:
 nonlincon = @(vars) nonlconSS(vars, constants, data);
 % Cost function:
-% J = @(vars) objFunSS(vars, constants, data, settings);
+[J] = @(vars) objFunSS(vars, constants, data, settings);
 % J = @(vars) objFunSS(vars, constants, data, settings);
 
 % No gradients of constraints and objective function:
@@ -115,7 +115,7 @@ options = optimoptions('fmincon', 'Display', 'iter', 'Algorithm', 'active-set', 
     'UseParallel', true);
 
 % Solve optimization problem:
-[varsOptSS_B, DV_SS_B] = fmincon(@(vars) objFunSS(vars, constants, data, settings), vars0, [], [], [], [], [], [], nonlincon, options);
+[varsOptSS_B, DV_SS_B] = fmincon(J, vars0, [], [], [], [], [], [], nonlincon, options);
 % Check constraints compliance of the solution:
 [c_B, ceq_B] = nonlconSS(varsOptSS_B, constants, data);
 
@@ -237,7 +237,7 @@ elseif length(xx) == 4
 end
 
 % Transpose to ensure a column vector
-% dxdt = dxdt';
+dxdt = dxdt';
 
 end
 
@@ -254,7 +254,7 @@ function [J, gradJ] = objFunSS(vars, constants, data, settings)
 
 % Extract Settings:
 switchGrads = settings.switchGradients;
-% odeOpt = settings.odeOpt;
+odeOpt = settings.odeOpt;
 
 % Extract initial guess:
 xxi = vars(1:4);
@@ -277,15 +277,8 @@ vyi = xxi(4);
 DV1 = sqrt((vxi - yi)^2 + (vyi + xi + mu)^2) - vi;
 
 % Propagate orbit to tf:
-% [~, xx] = ode78(@PBRFBP, [ti, tf], xxi, odeOpt, constants);
-if switchGrads == true
-    phi0 = eye(4);
-    xx0 = [xxi; phi0(:)];
-elseif switchGrads == false
-    xx0 = xxi;
-end
-
-[~, xx, STM] = propagator(xx0, ti, tf, constants);
+[~, xx] = ode78(@PBRFBP, [ti, tf], xxi, odeOpt, constants);
+[tt, xx, STM] = propagator(xx0, ti, tf, constants)
 
 finalState = xx(end, :)';
 xf = finalState(1);
@@ -300,7 +293,7 @@ J = DV1 + DV2;
 
 % Gradients:
 if switchGrads == true
-    Phi = STM;
+    Phi = reshape(xx(5:end), 4, 4);
     P1 = 1/sqrt((vxi - yi)^2 + (vyi + xi + mu)^2) .* [vyi + xi + mu; yi - vxi; vxi - yi; vyi + xi + mu];
     PN = 1/sqrt((vxf - yf)^2 + (vyf + xf + mu - 1)^2) .* [vyf + xf + mu - 1; yf - vxf; vxf - yf; vyf + xf + mu - 1];
     f_ti = PBRFBP(ti, xxi, constants);
@@ -322,7 +315,7 @@ function [c, ceq, dC, dCeq] = nonlconSS(vars, constants, data, settings)
 
 % Extract Settings:
 switchGrads = settings.switchGradients;
-% odeOpt = settings.odeOpt;
+odeOpt = settings.odeOpt;
 
 % Extract initial guess:
 xxi = vars(1:4);
