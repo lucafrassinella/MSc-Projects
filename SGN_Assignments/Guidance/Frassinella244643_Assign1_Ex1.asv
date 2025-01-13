@@ -7,7 +7,7 @@
 
 clearvars; close all; clc;
 format long
-tic
+
 plotSettings;
 
 %% -------------------- Pt.1 - Find Lagrangian Points -------------------- 
@@ -57,6 +57,9 @@ results.ex2.tf = tf;
 % Propagate corrected orbit:
 [xx, tt] = propagate3D(0, correctedState, tf, mu, true);
 
+% xxf = xx(end, 1:6)';
+% tf = tt(end);
+
 % Plot Halo Orbit:
 figure();
 plot3(xx(:, 1), xx(:, 2), xx(:, 3), 'Color', [0.1043 0.3843 0.6062], 'HandleVisibility', 'off')
@@ -79,12 +82,12 @@ cvec = 3.09 : -0.005 : 3.04;
 % Set matrix of target values of {y, vx, vz, C}:
 desiredValues_vec = [zeros(3, length(cvec)); cvec];
 % Set initial state as the corrected state of Pt.2:
-data.initialState = correctedState; 
+inState = correctedState; 
 % Set initial errors and parameter for Halo orbits finder:
-data.initialErr = ones(4, 1);
-data.tfGuess = 5;
-settings.Nmax = 1000;
-settings.tol = 1e-12;
+inErr = ones(4, 1);
+tfGuess = 5;
+Nmax = 1000;
+tol = 1e-12;
 
 corrStates = zeros(6, length(cvec));    % initialize corrected states matrix
 newCvec = zeros(length(cvec), 1);       % initialize Jacobi constant vector
@@ -108,8 +111,8 @@ legend;
 
 % Compute Halo orbits exploiting numerical continuation:
 for i = 1 : length(cvec)
-    data.desiredValues = desiredValues_vec(:, i); % extract vector of target values
-    [corrState, newC, err, tfNew, iter]  = findHaloOrbit(data, constants, settings); % compute corrected state for periodic Halo orbit
+    desVal = desiredValues_vec(:, i); % extract vector of target values
+    [corrState, newC, err, tfNew, iter]  = findHaloOrbit(mu, inState, tfGuess, initialErr, desVal, Nmax, tol); % compute corrected state for periodic Halo orbit
     corrStates(:, i) = corrState;   % update corrected states matrix
     newCvec(i) = newC;              % update Jacobi constant vector
     errvec(:, i) = err;        % update error matrix
@@ -121,11 +124,8 @@ for i = 1 : length(cvec)
     scatter3(xx(:,1), xx(:,2), xx(:,3), 15, newC*ones(size(xx, 1), 1), 'filled', 'HandleVisibility', 'off');
     scatter3(xx(:,1), -xx(:,2), xx(:,3), 15, newC*ones(size(xx, 1), 1), 'filled', 'HandleVisibility', 'off');
     
-    data.initialState = corrState;            % update new initial state as output of last step
+    inState = corrState;            % update new initial state as output of last step
 end
-
-results.ex3.correctedState = corrState;
-results.ex3.tf = tfNew;
 
 % add colorbar to plot:
 cb = colorbar;
@@ -135,8 +135,8 @@ ylabel(cb, 'Jacobi Constant')
 colormap('abyss') 
 
 %% Clear Workspace
-clearvars -except constants data settings results
-toc
+clearvars -except 
+
 %% Functions:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
