@@ -7,7 +7,6 @@
 
 clearvars; close all; clc;
 format long
-tic
 plotSettings;
 
 %% -------------------- Pt.1 - Find Lagrangian Points -------------------- 
@@ -37,10 +36,29 @@ vy0 = 0.319422926485;
 vz0 = 0; 
 data.initialState = [x0; y0; z0; vx0; vy0; vz0];
 
+% Propagate forward initial orbit:
+[xx_fwd, ~] = propagate3D(0, data.initialState, 5, mu, false);
+% Propagate backwards initial orbit
+[xx_bwd, ~] = propagate3D(0, data.initialState, -5, mu, false);
+% Plot Initial Halo Orbit:
+figure();
+plot3(xx_fwd(:, 1), xx_fwd(:, 2), xx_fwd(:, 3), 'HandleVisibility', 'off')
+hold on
+plot3(xx_bwd(:, 1), xx_bwd(:, 2), xx_bwd(:, 3), 'HandleVisibility', 'off')
+plot3(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3), ...
+    'ro', 'MarkerSize', 10, 'MarkerFaceColor', 'r')
+text(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3) - 0.007, ...
+    'L2', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center', 'FontSize', 16, 'FontWeight', 'bold')
+grid on
+xlabel('x [-]')
+ylabel('y [-]')
+zlabel('z [-]')
+title('Initial Propagated Trajectory (@Earth-Moon Rotating Frame)')
+
 % Define parameters and initialize vectors for Pseudo-Newton Method:
 settings.Nmax = 1000;
 settings.tol = 1e-12;
-data.tfGuess = 3;
+data.tfGuess = 5;
 data.initialErr = ones(4, 1);
 
 % Target values {y = 0; vx = 0; vz = 0; C = 3.09}:
@@ -67,10 +85,10 @@ plot3(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L
 text(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3) - 0.007, ...
     'L2', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center', 'FontSize', 16, 'FontWeight', 'bold')
 grid on
-xlabel('x')
-ylabel('y')
-zlabel('z')
-title('Periodic Halo orbit')
+xlabel('x [-]')
+ylabel('y [-]')
+zlabel('z [-]')
+title('Periodic Halo orbit (@Earth-Moon Rotating Frame)')
 
 %% ---------------------- Pt.3 - Halo Orbit Family ----------------------- 
 
@@ -94,12 +112,12 @@ iterVec = zeros(length(cvec), 1);       % initialize iterations vector
 
 % Begin plot of family of Halo orbits:
 figure()
-title('Family of Halo orbits')
+title('Family of Halo orbits (@Earth-Moon Rotating Frame)')
 hold on
 grid on
-xlabel('x')
-ylabel('y')
-zlabel('z')
+xlabel('x [-]')
+ylabel('y [-]')
+zlabel('z [-]')
 plot3(1-mu, 0, 0, 'o', 'MarkerSize', 16, 'MarkerFaceColor', [0.5 0.5 0.5], ...
     'DisplayName', 'Moon')
 plot3(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3), ...
@@ -136,7 +154,7 @@ colormap('abyss')
 
 %% Clear Workspace
 clearvars -except constants data settings results
-toc
+
 %% Functions:
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -356,8 +374,8 @@ figure()
 title('Lagrange Points - Earth-Moon System')
 hold on
 grid on
-xlabel('x')
-ylabel('y')
+xlabel('x [-]')
+ylabel('y [-]')
 
 % Plot circumferences of r = 1 and centered in P1 (Earth) and P2 (moon)
 theta = linspace(0, 2*pi, 100);  r = 1;

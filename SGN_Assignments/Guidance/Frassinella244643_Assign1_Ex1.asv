@@ -7,7 +7,6 @@
 
 clearvars; close all; clc;
 format long
-
 plotSettings;
 
 %% -------------------- Pt.1 - Find Lagrangian Points -------------------- 
@@ -37,10 +36,29 @@ vy0 = 0.319422926485;
 vz0 = 0; 
 data.initialState = [x0; y0; z0; vx0; vy0; vz0];
 
+% Propagate forward initial orbit:
+[xx_fwd, ~] = propagate3D(0, data.initialState, 5, mu, false);
+% Propagate backwards initial orbit
+[xx_bwd, ~] = propagate3D(0, data.initialState, -5, mu, false);
+% Plot Initial Halo Orbit:
+figure();
+plot3(xx_fwd(:, 1), xx_fwd(:, 2), xx_fwd(:, 3), 'HandleVisibility', 'off')
+hold on
+plot3(xx_bwd(:, 1), xx_bwd(:, 2), xx_bwd(:, 3), 'HandleVisibility', 'off')
+plot3(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3), ...
+    'ro', 'MarkerSize', 10, 'MarkerFaceColor', 'r')
+text(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3) - 0.007, ...
+    'L2', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center', 'FontSize', 16, 'FontWeight', 'bold')
+grid on
+xlabel('x [-]')
+ylabel('y [-]')
+zlabel('z [-]')
+title('Initial Propagated Trajectory (@Earth-Moon Rotating Frame)')
+
 % Define parameters and initialize vectors for Pseudo-Newton Method:
 settings.Nmax = 1000;
 settings.tol = 1e-12;
-data.tfGuess = 3;
+data.tfGuess = 5;
 data.initialErr = ones(4, 1);
 
 % Target values {y = 0; vx = 0; vz = 0; C = 3.09}:
@@ -57,9 +75,6 @@ results.ex2.tf = tf;
 % Propagate corrected orbit:
 [xx, tt] = propagate3D(0, correctedState, tf, mu, true);
 
-% xxf = xx(end, 1:6)';
-% tf = tt(end);
-
 % Plot Halo Orbit:
 figure();
 plot3(xx(:, 1), xx(:, 2), xx(:, 3), 'Color', [0.1043 0.3843 0.6062], 'HandleVisibility', 'off')
@@ -70,10 +85,10 @@ plot3(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L
 text(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3) - 0.007, ...
     'L2', 'VerticalAlignment', 'top', 'HorizontalAlignment', 'center', 'FontSize', 16, 'FontWeight', 'bold')
 grid on
-xlabel('x')
-ylabel('y')
-zlabel('z')
-title('Periodic Halo orbit')
+xlabel('x [-]')
+ylabel('y [-]')
+zlabel('z [-]')
+title('Periodic Halo orbit (@Earth-Moon Rotating Frame)')
 
 %% ---------------------- Pt.3 - Halo Orbit Family ----------------------- 
 
@@ -82,12 +97,12 @@ cvec = 3.09 : -0.005 : 3.04;
 % Set matrix of target values of {y, vx, vz, C}:
 desiredValues_vec = [zeros(3, length(cvec)); cvec];
 % Set initial state as the corrected state of Pt.2:
-inState = correctedState; 
+data.initialState = correctedState; 
 % Set initial errors and parameter for Halo orbits finder:
-inErr = ones(4, 1);
-tfGuess = 5;
-Nmax = 1000;
-tol = 1e-12;
+data.initialErr = ones(4, 1);
+data.tfGuess = 5;
+settings.Nmax = 1000;
+settings.tol = 1e-12;
 
 corrStates = zeros(6, length(cvec));    % initialize corrected states matrix
 newCvec = zeros(length(cvec), 1);       % initialize Jacobi constant vector
@@ -97,12 +112,12 @@ iterVec = zeros(length(cvec), 1);       % initialize iterations vector
 
 % Begin plot of family of Halo orbits:
 figure()
-title('Family of Halo orbits')
+title('Family of Halo orbits (@Earth-Moon Rotating Frame)')
 hold on
 grid on
-xlabel('x')
-ylabel('y')
-zlabel('z')
+xlabel('x [-]')
+ylabel('y [-]')
+zlabel('z [-]')
 plot3(1-mu, 0, 0, 'o', 'MarkerSize', 16, 'MarkerFaceColor', [0.5 0.5 0.5], ...
     'DisplayName', 'Moon')
 plot3(lagrangePoints.L2.coords(1), lagrangePoints.L2.coords(2), lagrangePoints.L2.coords(3), ...
@@ -111,8 +126,8 @@ legend;
 
 % Compute Halo orbits exploiting numerical continuation:
 for i = 1 : length(cvec)
-    desVal = desiredValues_vec(:, i); % extract vector of target values
-    [corrState, newC, err, tfNew, iter]  = findHaloOrbit(mu, inState, tfGuess, initialErr, desVal, Nmax, tol); % compute corrected state for periodic Halo orbit
+    data.desiredValues = desiredValues_vec(:, i); % extract vector of target values
+    [corrState, newC, err, tfNew, iter]  = findHaloOrbit(data, constants, settings); % compute corrected state for periodic Halo orbit
     corrStates(:, i) = corrState;   % update corrected states matrix
     newCvec(i) = newC;              % update Jacobi constant vector
     errvec(:, i) = err;        % update error matrix
@@ -124,8 +139,11 @@ for i = 1 : length(cvec)
     scatter3(xx(:,1), xx(:,2), xx(:,3), 15, newC*ones(size(xx, 1), 1), 'filled', 'HandleVisibility', 'off');
     scatter3(xx(:,1), -xx(:,2), xx(:,3), 15, newC*ones(size(xx, 1), 1), 'filled', 'HandleVisibility', 'off');
     
-    inState = corrState;            % update new initial state as output of last step
+    data.initialState = corrState;            % update new initial state as output of last step
 end
+
+results.ex3.correctedState = corrState;
+results.ex3.tf = tfNew;
 
 % add colorbar to plot:
 cb = colorbar;
@@ -135,7 +153,7 @@ ylabel(cb, 'Jacobi Constant')
 colormap('abyss') 
 
 %% Clear Workspace
-clearvars -except 
+clearvars -except constants data settings results
 
 %% Functions:
 
@@ -356,8 +374,8 @@ figure()
 title('Lagrange Points - Earth-Moon System')
 hold on
 grid on
-xlabel('x')
-ylabel('y')
+xlabel('x [-]')
+ylabel('y [-]')
 
 % Plot circumferences of r = 1 and centered in P1 (Earth) and P2 (moon)
 theta = linspace(0, 2*pi, 100);  r = 1;
