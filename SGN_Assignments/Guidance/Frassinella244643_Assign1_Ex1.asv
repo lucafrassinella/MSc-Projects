@@ -414,8 +414,7 @@ function [correctedState, newC, finalErr, tf, iter]  = findHaloOrbit(data, const
 %       - correctedState: Final corrected state vector         [6, 1]
 %       - newC: final obtained Jacobi Constant                 [1, 1]
 %       - finalErr: final errors wrt target values             [4, 1]
-%       - tf: corrected final time                             [1, 1]
-%       - iter: number of iterations to reach convergence      [1, 1]
+%       - tf: corrected final time                             [
 % ----------------------------------------------------------------------- %
 
 % Extract constants, data and settings:
@@ -438,11 +437,10 @@ iter = 0;
 initialGuess = [initialState(1); initialState(3); initialState(5); tfGuess];
 newGuess = initialGuess;
 err = initialErr;
-% Initialize new states:
+% Initialize new states
 xx0new = [newGuess(1); initialState(2); newGuess(2); initialState(4); newGuess(3); initialState(6); reshape(eye(6), 36, 1)]; % State and STM (42x1)
 newState = xx0new(1:6);
 
-% Main Loop:
 while (abs(err(1))>tol || abs(err(2))>tol || abs(err(3))>tol || abs(err(4))>tol) && iter < Nmax
      if iter 
          % Assemble reduced 4x4 linear system:
@@ -477,7 +475,6 @@ while (abs(err(1))>tol || abs(err(2))>tol || abs(err(3))>tol || abs(err(4))>tol)
     iter = iter + 1;
 end
 
-% Final Results:
 xx0_corr = xx0new;
 correctedState = xx0_corr(1: 6);
 newC = JacobiConstant(mu, correctedState);
@@ -580,3 +577,5 @@ set(0,'defaultAxesYMinorGrid','on');
 set(0, 'defaultAxesFontSize', 20);
 
 end
+
+

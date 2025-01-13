@@ -291,6 +291,7 @@ results.ex4.initialDateStr = cspice_et2utc(initialEpoch, 'C', 3);
 
 % N-body propagation:
 finalEpoch = initialEpoch + tof;
+results.ex4.finalDateStr = cspice_et2utc(finalEpoch, 'C', 3);
 xxi = xxi_ECI;
 labels = {'Sun'; 'Mercury'; 'Venus'; 'Earth'; 'Moon'; 'Mars Barycenter'; 'Jupiter Barycenter';
           'Saturn Barycenter'; 'Uranus Barycenter'; 'Neptune Barycenter'; 'Pluto Barycenter'};
@@ -319,7 +320,7 @@ subtitle('(@Earth ECI)')
 grid on
 axis equal
 
-
+toc
 
 %% Functions
 
