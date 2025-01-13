@@ -169,7 +169,7 @@ results.ex2b.errVel = errDim(2);
 % Plots:
 % Propagate trajectory and rotate it to ECI:
 [tt, xx] = propagate(vars_opt2(1:4), vars_opt2(5), vars_opt2(6), constants, settings);
-XX = rot2ECI(tt, xx, constants);
+XX_ss = rot2ECI(tt, xx, constants);
 
 % Plot:
 figure()
@@ -189,7 +189,7 @@ xlim([-1.5 3])
 legend;
 
 figure()
-plot(XX(:, 1), XX(:, 2), 'k', 'DisplayName', 'Trajectory')
+plot(XX_ss(:, 1), XX_ss(:, 2), 'k', 'DisplayName', 'Trajectory')
 hold on
 [xParkECI, yParkECI] = circularOrbit(r0, [0; 0]);
 [xMoon, yMoon] = circularOrbit(1, [0; 0]);
@@ -304,15 +304,20 @@ frame = 'J2000';
 [tt, xx] = nBodyPropagator(xxi, initialEpoch, finalEpoch, bodies, frame, center);
 
 figure
-plot(xx(:, 1), xx(:, 2))
+plot(xx(:, 1), xx(:, 2), 'Color', [0.2 0.5 0.5])
 hold on
+plot(XX_ss(:, 1)*constants.DU, XX_ss(:, 2)*constants.DU, 'k')
 % Plot Moon Orbit:
-theta = linspace(0, 2*pi, 801); rMoon = l_em/DU;
+theta = linspace(0, 2*pi, 801); rMoon = constants.l_e/constants.DU;
 xMOON = -mu + rMoon*cos(theta); yMOON = rMoon*sin(theta);
-xMOON = xMOON * DU;
-yMOON = yMOON * DU;
-plot(xMOON, yMOON, '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 0.6, 'HandleVisibility', 'off')  % Grigio scuro e tratteggiata
-
+xMOON = xMOON * constants.DU;
+yMOON = yMOON * constants.DU;
+plot(xMOON, yMOON, '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 0.6)
+xlabel('x [km]')
+ylabel('y [km]')
+legend('N-Body Propagated Orbit', 'Simple Shooting With Gradients', 'Moon Orbit')
+title('Comparison Between N-Body and PBRFBP Propagations')
+subtitle('(@Earth ECI)')
 grid on
 axis equal
 
@@ -329,17 +334,18 @@ R_Earth = cspice_bodvrd('EARTH', 'RADII', 3);
 R_Moon = cspice_bodvrd('MOON', 'RADII', 3);
 
 constants.mu = GM_Moon/(GM_Earth + GM_Moon); % Earth-Moon system gravity constant
-constants.TU = 4.34811305;      % [days]    Time unit
+constants.TU = 4.34256461;      % [days]    Time unit
 constants.DU = 3.84405000e05;   % [km]      Distance unit
 constants.VU = 1.02454018;      % [km/s]    Velocity unit
 
 % Earth, Sun & Moon constants:
 constants.R_Earth = R_Earth(1);     % [km]      Earth radius
 constants.R_Moon = R_Moon(1);       % [km]      Moon radius
-constants.ms = 3.28900541e05;       % [??]
-constants.rho = 3.88811143e02;      % [??]
-constants.om_s = -9.25195985e-01;   % [??]
-constants.om_m = 2.661861350e-06;   % [??]
+constants.ms = 3.28900541e05;       % [-]
+constants.rho = 3.88811143e02;      % [-]
+constants.om_s = -9.25195985e-01;   % [-]
+constants.om_m = 2.661861350e-06;   % [1/s]
+constants.l_e = 3.84405e05;         % [km]
 
 % Load Data:
 data.alpha = 0.2*pi;            % [rad]     Alpha angle
