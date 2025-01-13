@@ -204,6 +204,35 @@ subtitle('[@Earth ECI]', 'FontSize', 18)
 xlim([-1.25 2.5])
 legend;
 
+%% Pt.3: Multiple Shooting Optimization:
+tic
+% Number of nodes:
+N = 4; 
+% Discretized time vector:
+t = linspace(ti, tf, N);
+% for j = 1:N
+%     t(j) = ti + (j-1)/(N-1) * (tf - ti);
+% end
+
+% Define Initial guess for Multiple Shooting starting from xx0:
+x_ms = zeros(4,N);
+x_ms(:,1) = xx0;
+
+for j = 2 : N
+ [~,xx] = propagate(x_ms(:,j-1), t(j-1), t(j), constants);
+ x_ms(:,j) = xx(end,:)';
+end
+
+vars0_ms = zeros(4*N+2,1);
+vars0_ms(1:4*N) = reshape(x_ms, 4*N, 1);
+vars0_ms(4*N+1) = ti;
+vars0_ms(4*N+2) = tf;
+
+% Set options
+options = optimoptions('fmincon', 'Algorithm', 'active-set', 'SpecifyObjectiveGradient',true,'SpecifyConstraintGradient',true, 'Display','iter-detailed', 'MaxFunctionEvaluations',1e6, 'ConstraintTolerance',1e-7, 'OptimalityTolerance',1e-10, 'MaxIterations',10000); 
+% Optimization:
+[x_opt_ms, dv_opt_ms] = fmincon(@(vars) costFunction_ms(vars, data, constants), vars0_ms, [],[],[],[],[],[], @(vars) constraints_ms(vars, data, constants), options);
+toc
 %% Functions
 
 function [data, constants] = loadDataset()
@@ -244,7 +273,7 @@ data.vf = sqrt(constants.mu/data.rf);
 
 end
 
-function [dxdt] = PBRFBP(t,xx, constants, stm)
+function [dxdt] = PBRFBP(t, xx, constants, stm)
 
 % Inputs: xx = [20x1]
 % Outputs: dxdt = [20x1]
@@ -534,6 +563,163 @@ DV_tf = PN' * f_tf;
 gradDv = [P1 + PHI' * PN;
           DV_ti;
           DV_tf];
+
+end
+
+function [c, ceq, dC, dCeq] = constraints_ms(vars, data, constants)
+
+mu = constants.mu;  % Gravitational parameter
+Re = constants.R_Earth;  % Earth radius
+Rm = constants.R_Moon;  % Moon radius
+DU = constants.DU;
+r0 = data.r0;  % Initial orbit radius
+rf = data.rf;  % Final orbit radius
+
+% Compute number of time instants for multiple shooting
+N = (length(vars) - 2) / 4;
+
+% Extract Variables:
+xi = vars(1);      % Initial x position
+yi = vars(2);      % Initial y position
+vxi = vars(3);     % Initial x velocity
+vyi = vars(4);     % Initial y velocity
+
+xf = vars(end-5);  % Final x position
+yf = vars(end-4);  % Final y position
+vxf = vars(end-3); % Final x velocity
+vyf = vars(end-2); % Final y velocity
+
+ti = vars(end-1);
+tf = vars(end);
+
+% Linearly interpolate time for each shooting interval
+t = linspace(ti, tf, N);  % Interpolated time vector
+
+% Initialize equality constraint vector for positions and velocities
+ceq = zeros(4*N, 1);
+% Initial orbit constraints:
+ceq(end-3) = (xi + mu)^2 + yi^2 - r0^2;  
+ceq(end-2) = (xi + mu) * (vxi - yi) + yi * (vyi + xi + mu);  
+% Final orbit constraints:
+ceq(end-1) = (xf + mu - 1)^2 + yf^2 - rf^2;  
+ceq(end) = (xf + mu - 1) * (vxf - yf) + yf * (vyf + xf + mu - 1);  
+
+% Inequality constraints:
+c = zeros(2*N + 1, 1);
+c(1:2, 1) = [(Re/DU)^2 - (xi + mu)^2 - yi^2; 
+            (Rm/DU)^2 - (xi + mu - 1)^2 - yi^2]; 
+
+% Propagate states and apply constraints for each shooting interval
+for j = 1:N-1
+    % Extract current and next state:
+    xxjj = vars(4*j + 1 : 4*j + 4);  % Next state
+    xxj = vars(4*j-3 : 4*j);  % Current state
+
+    % Propagate state over the current interval:
+    [~, xx] = propagate(xxj, t(j), t(j+1), constants);
+
+    % Compute continuity constraint (matching positions and velocities):
+    ceq(4*j-3 : 4*j) = xx(end, 1:4)' - xxjj;
+
+    % Update inequality constraints:
+    xj = xxjj(1); 
+    yj = xxjj(2); 
+    c(2*j+1 : 2*j+2) = [(Re/DU)^2 - (xj + mu)^2 - yj^2;  
+                        (Rm/DU)^2 - (xj + mu - 1)^2 - yj^2]; 
+end 
+
+% Final time inequality constraint:
+c(end) = ti - tf;
+
+%%%%%%% GRADIENTS %%%%%%%%%%
+
+% Initialize gradient vectors:
+Q1 = zeros(4*(N-1), 1);
+QN = zeros(4*(N-1), 1);
+
+% Initialize Jacobian matrices:
+dCeq = zeros(3*N + 4, 4*N + 2);
+dC = zeros(2*N + 1, 4*N + 2);
+
+for j = 1:N-1
+    % Extract current interval state;
+    xxj = vars(4*j-3 : 4*j); 
+    xj = xxj(1);  
+    yj = xxj(2);  
+
+    % Propagate state and get RHS of the PBRFBP:
+    [~, xx, PHI] = propagate_stm(xxj, t(j), t(j+1), constants); 
+    fj = PBRFBP(t(j), xxj, constants, 0);  
+    fjj = PBRFBP(t(j+1), xx(end, :), constants, 0);  
+
+    % Compute equality constraint gradients (matching positions and
+    % velocities):
+    Q1(4*j-3 : 4*j) = -(N-j)/(N-1) * PHI * fj + (N-j-1)/(N-1) * fjj;  
+    QN(4*j-3 : 4*j) = -(j-1)/(N-1) * PHI * fj + j/(N-1) * fjj;  
+
+    % Update Jacobians for equality constraints:
+    dCeq(4*j-3: 4*j, 4*j+1:  4*j + 4) = -eye(4);  
+    dCeq(4*j-3: 4*j, 4*j-3 : 4*j) = PHI;  
+
+    % Update Jacobians for inequality constraints:
+    dC(2*j-1: 2*j, 4*j-3:  4*j) = [-2*(xj + mu), -2*yj, 0, 0;  
+                                   -2*(xj + mu - 1), -2*yj, 0, 0]; 
+end
+
+% Final inequality constraint:
+dC(2*N-1:2*N, 4*N-3:4*N) = [-2*(xf + mu), -2*yf, 0, 0;  % Earth boundary final Jacobian
+                            -2*(xf + mu - 1), -2*yf, 0, 0];  % Moon boundary final Jacobian
+dC(end, end-1:end) = [1 -1];  % Time constraint Jacobian
+
+% Combine the Jacobian matrices
+dC = dC';  % Transpose Jacobian for inequality constraints
+dCeq(1:4*(N-1), end-1:end) = [Q1, QN];  % Combine continuity gradients
+
+% Final Jacobian for equality constraints
+dPHI1dxi = [2*(xi + mu), 2*yi, 0, 0; vxi, vyi, (xi + mu), yi]; 
+dPHI2dxf = [2*(xf + mu - 1), 2*yf, 0, 0; vxf, vyf, (xf + mu - 1), yf];  
+dPHI = [dPHI1dxi, zeros(2, 3*N+2); zeros(2, 3*N), dPHI2dxf, zeros(2,2)];  
+% Add Jacobian to the equality constraint gradients:
+dCeq(end-3:end, :) = dPHI;  
+
+% Transpose the equality constraint Jacobian matrix
+dCeq = dCeq';
+
+
+end
+
+function [dv, gradDv] = costFunction_ms(vars, data, constants)
+
+% Extract constants and data:
+mu = constants.mu;
+r0 = data.r0;
+rf = data.rf;
+v0 = sqrt((1 - mu)/r0);
+vf = sqrt(mu/rf);
+
+% Compute number of time instants for multiple shooting
+N = (length(vars) - 2) / 4;
+
+% Extract initial state (position and velocity) and final state
+xi = vars(1);      % Initial x position
+yi = vars(2);      % Initial y position
+vxi = vars(3);     % Initial x velocity
+vyi = vars(4);     % Initial y velocity
+
+xf = vars(end-5);  % Final x position
+yf = vars(end-4);  % Final y position
+vxf = vars(end-3); % Final x velocity
+vyf = vars(end-2); % Final y velocity
+
+% Compute deltaV:
+DV1 = sqrt((vxi - yi)^2 + (vyi + xi + mu)^2) - v0;
+DV2 = sqrt((vxf - yf)^2 + (vyf + xf + mu - 1)^2) - vf;
+dv = DV1 + DV2;
+
+P1 = 1/sqrt((vxi - yi)^2 + (vyi + xi + mu)^2) * [vyi + xi + mu; yi - vxi; vxi - yi; vyi + xi + mu];
+PN = 1/sqrt((vxf - yf)^2 + (vyf + xf + mu - 1)^2) * [vyf + xf + mu - 1; yf - vxf; vxf - yf; vyf + xf + mu - 1];
+% Concatenate gradients for initial and final states:
+gradDv = [P1; zeros(N * 2, 1); PN; 0; 0];
 
 end
 
