@@ -7,7 +7,6 @@
 
 clearvars; close all; clc;
 cspice_kclear()
-rng default
 format long
 plotSettings;
 addpath('.\kernels\')
@@ -157,7 +156,7 @@ nonlCon2 = @(vars) constraints2(vars, data, constants);
 [vars_opt2, dv_opt2] = fmincon(J, vars0, [], [], [], [], [], [], nonlCon2, options);
 
 % Compute errors at arrival orbit:
-[c, ceq] = nonlCon2(vars_opt2);
+[~, ceq] = nonlCon2(vars_opt2);
 % Dimensionalize errors [m], [m/s]:
 errDim = [ceq(3) * constants.DU*1e3; ceq(4) * constants.VU*1e3];
 
@@ -248,7 +247,6 @@ results.ex3.errVel = errDim(2);
 plotMultipleShooting(vars_opt_ms, N, constants, data)
 
 %% Pt.4: N-Body Propagation
-clc;
 
 % Upper/Lower Bounds for et:
 tFormat = 'YYYY-MON-DD-HR:MN:SC.####::TDB';
@@ -960,7 +958,7 @@ set(0, 'defaultLegendFontSize', 12);
 % Setting Axes:
 set(0, 'defaultAxesXMinorGrid', 'on');
 set(0,'defaultAxesYMinorGrid','on');
-set(0, 'defaultAxesFontSize', 20);
+set(0, 'defaultAxesFontSize', 25);
 
 end
 
