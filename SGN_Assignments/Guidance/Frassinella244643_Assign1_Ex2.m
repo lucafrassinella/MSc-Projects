@@ -117,9 +117,9 @@ plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
 xlabel('x [-]')
 ylabel('y [-]')
-% title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
-% subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
-xlim([-1.5 3])
+title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
+subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
+xlim([-1.5 2.25])
 legend('FontSize', 25);
 
 figure()
@@ -182,9 +182,9 @@ plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
 xlabel('x [-]')
 ylabel('y [-]')
-% title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
-% subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
-xlim([-1.5 1.5])
+title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
+subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
+xlim([-1.5 2.25])
 legend('FontSize', 25);
 
 figure()
@@ -198,9 +198,9 @@ grid on
 axis equal
 xlabel('x [-]')
 ylabel('y [-]')
-% title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
-% subtitle('[@Earth ECI]', 'FontSize', 18)
-xlim([-1.5 1.5])
+title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
+subtitle('[@Earth ECI]', 'FontSize', 18)
+xlim([-1.25 2.5])
 legend('FontSize', 25);
 
 %% Pt.3: Multiple Shooting Optimization:
@@ -998,6 +998,7 @@ xx_ms = vertcat(state_intervals{:});
 % Figure 1: Optimal trajectory in the rotating frame
 figure();
 hold on;
+grid on;
 plot(xx_ms(:, 1), xx_ms(:, 2), 'k');
 [xPark_i, yPark_i] = circularOrbit(r0, [-mu; 0]); % initial parking orbit
 [xPark_f, yPark_f] = circularOrbit(rf, [1-mu; 0]);  % final parking orbit
@@ -1012,13 +1013,17 @@ ylabel('y [DU]');
 title('Optimal Trajectory (@EMB Earth-Moon Rotating Frame)');
 legend('Transfer Orbit', 'Parking Orbit', 'Target Orbit', 'Nodes');
 axis equal;
+xlim([-1.5 2.5])
+ylim([-0.25 1.75])
 
 % Rotate to ECI:
 xx_ms = xx_ms(:,1:4);
 xxECI = rot2ECI(tvec, xx_ms, constants);
+
 % Figure 2: Optimal trajectory in the ECI frame
 figure()
 hold on;
+grid on;
 plot(xxECI(:, 1), xxECI(:, 2), 'k', 'LineWidth', 1);
 [xParkECI, yParkECI] = circularOrbit(r0, [0; 0]);
 [xMoon, yMoon] = circularOrbit(1, [0; 0]);
