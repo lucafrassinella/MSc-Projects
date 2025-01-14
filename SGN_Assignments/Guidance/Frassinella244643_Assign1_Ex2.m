@@ -44,12 +44,12 @@ axis equal
 [xPark_f, yPark_f] = circularOrbit(rf, [1-mu; 0]);  % final parking orbit
 plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking orbit') 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
-xlabel('x [-]')
-ylabel('y [-]')
+xlabel('x [-]', 'FontSize', 35)
+ylabel('y [-]', 'FontSize', 35)
 title('Trajectory from initial guess', 'FontWeight', 'bold')
 subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
 xlim([-1.5 3])
-legend;
+legend('FontSize', 25);
 
 % Rotate to ECI and Plot initial guess solution:
 XX = rot2ECI(tt, xx, constants);
@@ -69,7 +69,7 @@ ylabel('y [-]')
 title('Trajectory from initial guess', 'FontWeight', 'bold')
 subtitle('[@Earth ECI]', 'FontSize', 18)
 xlim([-1.25 2.5])
-legend;
+legend('FontSize', 25);
 
 %% Pt. 2: Simple Shooting Optimization:
 
@@ -117,10 +117,10 @@ plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
 xlabel('x [-]')
 ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
-subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
+% title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
+% subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
 xlim([-1.5 3])
-legend;
+legend('FontSize', 25);
 
 figure()
 plot(XX(:, 1), XX(:, 2), 'k', 'DisplayName', 'Trajectory')
@@ -136,7 +136,7 @@ ylabel('y [-]')
 title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
 subtitle('[@Earth ECI]', 'FontSize', 18)
 xlim([-1.25 2.5])
-legend;
+legend('FontSize', 25);
 
 
 %%%% b) Simple Shooting with analytical derivatives of the
@@ -182,10 +182,10 @@ plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
 xlabel('x [-]')
 ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
-subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
-xlim([-1.5 3])
-legend;
+% title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
+% subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
+xlim([-1.5 1.5])
+legend('FontSize', 25);
 
 figure()
 plot(XX_ss(:, 1), XX_ss(:, 2), 'k', 'DisplayName', 'Trajectory')
@@ -198,10 +198,10 @@ grid on
 axis equal
 xlabel('x [-]')
 ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
-subtitle('[@Earth ECI]', 'FontSize', 18)
-xlim([-1.25 2.5])
-legend;
+% title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
+% subtitle('[@Earth ECI]', 'FontSize', 18)
+xlim([-1.5 1.5])
+legend('FontSize', 25);
 
 %% Pt.3: Multiple Shooting Optimization:
 
@@ -275,6 +275,8 @@ tof = (tf-ti)*constants.TU*86400;
 xxi_ECI  = rot2ECI(ti, xxi, constants)';
 xxi_ECI = [xxi_ECI(1:2); 0; xxi_ECI(3:4); 0];
 xxi_ECI = [xxi_ECI(1:3) .* constants.DU; xxi_ECI(4:6) .* constants.VU]; % [km], [km/s]
+
+results.ex4.xx0_eci = xxi_ECI;
 
 % Define target angle:
 thetaTarget = mod(om_s * ti, 2*pi); % target angle [0, 2*pi]
@@ -959,7 +961,7 @@ set(0, 'defaultLegendFontSize', 12);
 % Setting Axes:
 set(0, 'defaultAxesXMinorGrid', 'on');
 set(0,'defaultAxesYMinorGrid','on');
-set(0, 'defaultAxesFontSize', 25);
+set(0, 'defaultAxesFontSize', 35);
 
 end
 
