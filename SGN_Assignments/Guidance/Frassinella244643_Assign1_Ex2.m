@@ -305,22 +305,22 @@ frame = 'J2000';
 [tt, xx] = nBodyPropagator(xxi, initialEpoch, finalEpoch, bodies, frame, center);
 
 figure
-plot(xx(:, 1), xx(:, 2), 'Color', [0.2 0.5 0.5])
+plot(xx(:, 1), xx(:, 2), 'Color', [0 0.5 1])
 hold on
 plot(XX_ss(:, 1)*constants.DU, XX_ss(:, 2)*constants.DU, 'k')
-% Plot Moon Orbit:
-theta = linspace(0, 2*pi, 801); rMoon = constants.l_e/constants.DU;
-xMOON = -mu + rMoon*cos(theta); yMOON = rMoon*sin(theta);
-xMOON = xMOON * constants.DU;
-yMOON = yMOON * constants.DU;
-plot(xMOON, yMOON, '--', 'Color', [0.4 0.4 0.4], 'LineWidth', 0.6)
+[xParkECI, yParkECI] = circularOrbit(r0, [0; 0]);
+[xMoon, yMoon] = circularOrbit(1, [0; 0]);
+plot(xParkECI*constants.DU, yParkECI*constants.DU, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking orbit')
+plot(xMoon*constants.DU, yMoon*constants.DU, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Moon orbit') 
 xlabel('x [km]')
 ylabel('y [km]')
-legend('N-Body Propagated Orbit', 'Simple Shooting With Gradients', 'Moon Orbit')
+legend('N-Body Propagated Orbit', 'Simple Shooting With Gradients', 'Initial Parking Orbit', 'Moon Orbit', 'FontSize', 25)
 title('Comparison Between N-Body and PBRFBP Propagations')
 subtitle('(@Earth ECI)')
 grid on
 axis equal
+ylim([-6e05 8.5e05])
+xlim([-7e05 7e05])
 
 toc
 
