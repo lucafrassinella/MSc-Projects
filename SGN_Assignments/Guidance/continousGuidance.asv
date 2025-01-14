@@ -89,7 +89,7 @@ results.ex2.adim_qties = data;
 results.ex2.xx0 = x0;
 results.ex2.xxf;
 
-%% Ex. 4: Continuous Guidance Solution (T = 3.000 N)
+%% 4:
 clc; clearvars -except data x0 xf results settings;
 
 % Set Maximum Number Of Iterations to 5:
@@ -143,8 +143,7 @@ xlabel('Time [-]')
 ylabel('Hamiltonian [-]')
 xlim([tt(1) tt(end)])
 grid on
-% title('Hamiltonian Time Evolution')
-% subtitle('$T_{max}$=3.000 N')
+title('Hamiltonian Time Evolution')
 
 % Primer vector components evolution in the NTW ref. frame:
 alpha = - ll(4:6, :) ./ lv';
@@ -170,7 +169,6 @@ xlim([tt(1) tt(end)])
 grid on
 title('Time Evolution of $\alpha$ components in NTW frame')
 
-% Plot Trajectory:
 figure()
 plot3(xx(:, 1), xx(:, 2), xx(:, 3), 'k', 'LineWidth', 1.5) 
 hold on
@@ -187,7 +185,7 @@ title('Orbit Raising Trajectory (@Earth ECI)')
 subtitle('$T_{max}$=3.000 N')
 
 
-%% Ex.5 - Lower Thrust Level solution through numerical continuation:
+%% PT.5 - Lower Thrust Level solution through numerical continuation:
 
 % initialize Initial Guess:
 TmaxVec = linspace(3e-03, 2.86e-03, 10)'.*((data.TU^2)/(data.MU*data.DU));
@@ -239,35 +237,11 @@ for i = 1 : length(tt)
          -data.Tmax/(data.Isp*data.g0)];
     
     H(i) = q_i + dot(ll_i, fi);
-end
+    end
 
-%%
-% Plot time evolution of the Hamiltonian:
 figure()
-plot(tt, H, 'k')
-xlabel('Time [-]')
-ylabel('Hamiltonian [-]')
-xlim([tt(1) tt(end)])
-grid on
-title('Hamiltonian Time Evolution')
-subtitle('$T_{max}$=2.860 N')
-
-% Plot Trajectory:
-figure()
-plot3(xx(:, 1), xx(:, 2), xx(:, 3), 'k', 'LineWidth', 1.5) 
-hold on
-plot3(x0(1), x0(2), x0(3), 'o', 'MarkerSize', 8, 'MarkerFaceColor', 'red', 'MarkerEdgeColor', 'k', 'DisplayName', 'Initial Point') 
-plot3(xf(1), xf(2), xf(3), 'o', 'MarkerSize', 8, 'MarkerFaceColor', 'blue', 'MarkerEdgeColor', 'k', 'DisplayName', 'Target Point') 
-plot3(0, 0, 0, 'o', 'MarkerSize', 25, 'MarkerFaceColor', 'black', 'MarkerEdgeColor', 'k', 'DisplayName', 'Earth') 
-xlabel('x [-]')
-ylabel('y [-]')
-zlabel('z [-]')
-legend('Transfer Trajectory', 'Initial Point', 'Target Point', 'Earth')
-grid on
-view([-45 15])
-title('Orbit Raising Trajectory (@Earth ECI)')
-subtitle('$T_{max}$=2.860 N')
-
+plot(tt, H)
+toc
 %% FUNCTIONS
 
 function [dx] = TPBVP(~, x, data)
