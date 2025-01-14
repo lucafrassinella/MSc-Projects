@@ -274,7 +274,6 @@ navigationSol_case3.pos = sqrt(trace(navigationSol_case3.P(1:3,1:3)));
 navigationSol_case3.vel = sqrt(trace(navigationSol_case3.P(4:6,4:6)));
 % Linear Mapping:
 [navigationSol_case3.std_a, navigationSol_case3.std_i] = linMap(navigationSol_case3.state, navigationSol_case3.P, constants);
-toc
 
 %% Functions
 
