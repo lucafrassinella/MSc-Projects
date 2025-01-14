@@ -8,6 +8,7 @@
 clearvars; close all; clc;
 format long
 plotSettings;
+rng default
 
 % Problem Data:
 hi = 800; % [km]
@@ -96,15 +97,15 @@ clc; clearvars -except data x0 xf results settings;
 N_iter = 5;
 [sol, err, gradErr] = computeOrbit(N_iter, data, x0, xf, settings);
 
-%% Save solutions:
+% Save solutions:
 results.ex4.ll0 = sol(1:7);
 results.ex4.tf = sol(end);
 results.ex4.errPos = norm(err(1:3).*data.DU);
 results.ex4.errVel = norm(err(4:6).*data.DU/data.TU);
 
 % Propagation from initial guess:
-ll0 = sol(1:7);
-tf = sol(end);
+ll0 = results.ex4.ll0;
+tf = results.ex4.tf;
 state0 = [x0; ll0];
 [tt, xx] = propagate(state0, data.t0, tf, data, settings);
 
@@ -143,11 +144,11 @@ xlabel('Time [-]')
 ylabel('Hamiltonian [-]')
 xlim([tt(1) tt(end)])
 grid on
-% title('Hamiltonian Time Evolution')
-% subtitle('$T_{max}$=3.000 N')
+title('Hamiltonian Time Evolution')
+subtitle('$T_{max}$=3.000 N')
 
 % Primer vector components evolution in the NTW ref. frame:
-alpha = - ll(4:6, :) ./ lv';
+alpha = - xx(:, 11:13)' ./ vecnorm(xx(:, 11:13)');
 % Rotate to NTW frame:
 alphaNTW = zeros(3, length(alpha));
 for i = 1 : length(alpha)
