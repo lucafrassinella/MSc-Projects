@@ -7,7 +7,6 @@
 
 clearvars; close all; clc;
 cspice_kclear()
-
 plotSettings;
 addpath('.\kernels\')
 addpath('.\sgp4\')
@@ -102,6 +101,29 @@ realMeasurements.svalbard.elevation = realMeasurements.svalbard_mat(:, 3)';
 [visibilityTimes.svalbard_real, visibleCoords.svalbard_real, timeWindow.svalbard_real, visibilityCondition.svalbard_real] = visibilityWindow(realMeasurements.svalbard, svalbard, lc.svalbard.et_vec);
 
 %%%% Plots:
+figure()
+hold on
+plot(visibleCoords.kourou_TBP.azimuth, visibleCoords.kourou_TBP.elevation, 'x', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0, 0.4470, 0.7410], 'LineWidth', 1.5)
+plot(visibleCoords.kourou_real.azimuth, visibleCoords.kourou_real.elevation, '*', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.8500, 0.3250, 0.0980], 'LineWidth', 1.5) 
+plot(visibleCoords.troll_TBP.azimuth, visibleCoords.troll_TBP.elevation, 'x', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.9290, 0.6940, 0.1250], 'LineWidth', 1.5) 
+plot(visibleCoords.troll_real.azimuth, visibleCoords.troll_real.elevation, '*', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.4940, 0.1840, 0.5560], 'LineWidth', 1.5) 
+plot(visibleCoords.svalbard_TBP.azimuth, visibleCoords.svalbard_TBP.elevation, 'x', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.4660, 0.6740, 0.1880], 'LineWidth', 1.5) 
+plot(visibleCoords.svalbard_real.azimuth, visibleCoords.svalbard_real.elevation, '*', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.3010, 0.7450, 0.9330], 'LineWidth', 1.5)
+legend('KOUROU (Kepler)', 'KOUROU (SGP4 with noise)', 'TROLL (Kepler)', ...
+    'TROLL (SGP4 with noise)', 'SVALBARD (Kepler)', 'SVALBARD (SGP4 with noise)')
+axis([-180, 180, 0, 90])
+ax = gca;
+ax.FontSize = 25;
+xlabel('Azimuth [deg]', 'FontSize', 30)
+ylabel('Elevation [deg]', 'FontSize', 30)
+
+
 
 
 %% 3. Solve the Navigation Problem:
