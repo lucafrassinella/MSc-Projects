@@ -47,10 +47,34 @@ x0 = xx_eci(end,:)';
 [visibilityTimes.svalbard_TBP, visibleCoords.svalbard_TBP, timeWindow.svalbard_TBP, visibilityCondition.svalbard_TBP] = visibilityWindow(lc.svalbard.TBP, svalbard, lc.svalbard.et_vec);
 
 %%%% Plots:
+% Evolution of Azimuth and Elevation from ground station:
+%%
 plotLocalCoords(lc.kourou.TBP, kourou, lc.kourou.et_vec, visibilityTimes.kourou_TBP, visibleCoords.kourou_TBP.azimuth, visibleCoords.kourou_TBP.elevation)
-plotLocalCoords(lc.troll.TBP, troll, lc.troll.et_vec, visibilityTimes.troll_TBP, visibleCoords.troll_TBP.azimuth, visibleCoords.troll_TBP.elevation)
-plotLocalCoords(lc.svalbard.TBP, svalbard, lc.svalbard.et_vec, visibilityTimes.svalbard_TBP, visibleCoords.svalbard_TBP.azimuth, visibleCoords.svalbard_TBP.elevation)
+%%
+plotLocalCoords(lc.troll.TBP, troll, lc.troll.et_vec)
+plotLocalCoords(lc.svalbard.TBP, svalbard, lc.svalbard.et_vec)
 
+% Visible Azimuth and Elevation within the visibility windows:
+figure();
+plot(visibleCoords.kourou_TBP.azimuth, visibleCoords.kourou_TBP.elevation, 'o')
+axis([-180, 180, 0, 90])
+xlabel('Azimuth [deg]')
+ylabel('Elevation [deg]')
+title('KOUROU Visible Azimuth and Elevation')
+
+figure();
+plot(visibleCoords.troll_TBP.azimuth, visibleCoords.troll_TBP.elevation, 'o')
+axis([-180, 180, 0, 90])
+xlabel('Azimuth [deg]')
+ylabel('Elevation [deg]')
+title('TROLL Visible Azimuth and Elevation')
+
+figure();
+plot(visibleCoords.svalbard_TBP.azimuth, visibleCoords.svalbard_TBP.elevation, 'o')
+axis([-180, 180, 0, 90])
+xlabel('Azimuth [deg]')
+ylabel('Elevation [deg]')
+title('SVALBARD Visible Azimuth and Elevation')
 
 %% 2. Simulate Measurements:
 
@@ -815,16 +839,15 @@ yyaxis left % Left axis for azimuth
 plot(tspan / cspice_spd(), azimuth, 'DisplayName', 'Azimuth')
 hold on
 plot(visibilityTimesVec / cspice_spd(), visibleAzimuth, 'Color',[0, 0, 139] / 255, 'LineStyle','-', 'LineWidth', 3,  'DisplayName', 'Visible Azimuth')
-ylabel('Azimuth [deg]','Color','k', 'FontSize', 30) 
+ylabel('Azimuth [deg]','Color','k') 
 ax = gca;
 ax.YColor = 'k';
 yyaxis right % Right axis for elevation
 plot(tspan / cspice_spd(), elevation, 'DisplayName', 'Elevation')
 plot(visibilityTimesVec / cspice_spd(), visibleElevation, 'Color',[139, 0, 0] / 255, 'LineStyle','-', 'LineWidth', 3,  'DisplayName', 'Visible Elevation')
 grid on
-ylabel('Elevation [deg]','Color','k', 'FontSize', 30) 
+ylabel('Elevation [deg]','Color','k') 
 ax.YColor = 'k';
-title(NAME + " station")
 % Convert epoch times (tspan) into time strings (hh:mm:ss)
 time_labels = cell(length(tspan), 1); 
 for i = 1:length(tspan)
@@ -840,7 +863,7 @@ tick_labels = time_labels(tick_indices);
 xticks(tick_values);
 xticklabels(tick_labels);
 xtickangle(45);
-xlabel('18-NOV-2024', 'FontSize', 30)
+xlabel('18-NOV-2024')
 legend('Location', 'best', 'FontSize', 20);
 hold on
 xlim([tspan(1) tspan(end)] / cspice_spd())
@@ -851,8 +874,15 @@ legend('SMOS Visible Coordinates', 'Location', 'north')
 axis([-180, 180, 0, 90])
 ax = gca;
 ax.FontSize = 25;
-xlabel('Azimuth [deg]', 'FontSize', 30)
-ylabel('Elevation [deg]', 'FontSize', 30)
+xlabel('Azimuth [deg]')
+ylabel('Elevation [deg]')
+
+% Salvataggio del plot in PDF senza tagli
+set(gcf, 'Units', 'normalized', 'OuterPosition', [0 0 1 1]); % Massimizza la figura nella finestra
+set(gca, 'LooseInset', max(get(gca,'TightInset'), 0.02)); % Minimizza i margini esterni
+exportgraphics(gcf, 'C:\Users\lucaf\Desktop\UNI\GNC\PLOTS\ass02ex02\plot_finale.pdf', 'ContentType', 'vector');
+
+
 
 end
 

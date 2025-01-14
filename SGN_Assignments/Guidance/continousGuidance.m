@@ -200,7 +200,7 @@ guess = sol;
 for i = 2 : length(TmaxVec)
     data.Tmax = TmaxVec(i); 
     options = optimoptions('fsolve', 'MaxFunctionEvaluations', 10000, 'MaxIterations', 10000, 'Display','iter-detailed',...
-   'SpecifyObjectiveGradient', true, 'FunctionTolerance', 1e-06, 'Algorithm', 'trust-region-dogleg');
+   'SpecifyObjectiveGradient', true, 'FunctionTolerance', 1e-10, 'StepTolerance', 1e-10,  'Algorithm','trust-region-dogleg');
     optimizationFun = @(guess) optimization(x0, guess, data, xf, settings);
     [~, gradErr] = checkGradients(optimizationFun, guess);
     [sol, err, exitflag] = fsolve(optimizationFun, guess, options);
