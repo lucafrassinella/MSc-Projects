@@ -69,12 +69,6 @@ title('Lunar Orbiter Trajectory (@Moon MCI)')
 idealMeasurements.position = xx(:, 1:3);
 idealMeasurements.range = orbiter_lc_kernels.range;
 
-% Compute real simulated measurements:
-realMeasurements.position = mvnrnd(idealMeasurements.position, data.Rpos);
-realMeasurements.range = mvnrnd(idealMeasurements.range', data.sigmaMeas^2);
-
-
-%%%% PLOTS:
 % Plot Ideal position and relative range over time:
 figure()
 hold on
@@ -100,44 +94,20 @@ xticks(tick_values);
 xticklabels(tick_labels);
 xtickangle(0);
 
+% Compute real simulated measurements:
+realMeasurements.position = mvnrnd(idealMeasurements.position, data.Rpos);
+realMeasurements.range = mvnrnd(idealMeasurements.range', data.sigmaMeas^2);
+
 % Plot of the error with 3sigma boundaries:
 figure()
-% Subplot 1: Range error
-subplot(4, 1, 1);
-plot(data.tspan/cspice_spd, realMeasurements.range - idealMeasurements.range', '-k', 'LineWidth', 1.5);
+plot(data.tspan/cspice_spd, realMeasurements.range - idealMeasurements.range');
 hold on
-yline(3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-yline(-3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-title('Range', 'FontSize', 25);
-xlim([data.tspan(1) data.tspan(end)]/cspice_spd);
-% Subplot 2: X error
-subplot(4, 1, 2);
-plot(data.tspan/cspice_spd, realMeasurements.position(:, 1) - xx(:, 1), '-k', 'LineWidth', 1.5);
-hold on
-yline(3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-yline(-3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-title('x component', 'FontSize', 25);
-xlim([data.tspan(1) data.tspan(end)]/cspice_spd);
-% Subplot 3: Y error
-subplot(4, 1, 3);
-plot(data.tspan/cspice_spd, realMeasurements.position(:, 2) - xx(:, 2), '-k', 'LineWidth', 1.5);
-hold on
-yline(3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-yline(-3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-title('y component', 'FontSize', 25);
-xlim([data.tspan(1) data.tspan(end)]/cspice_spd);
-% Subplot 4: Z error
-subplot(4, 1, 4);
-plot(data.tspan/cspice_spd, realMeasurements.position(:, 3) - xx(:, 3), '-k', 'LineWidth', 1.5);
-hold on
-yline(3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-yline(-3*data.sigmaMeas, '--r', 'LineWidth', 1.5);
-title('z', 'Interpreter', 'latex', 'FontSize', 25);
-xlim([data.tspan(1) data.tspan(end)]/cspice_spd);
-% Adjust x-axis:
-subplot(4, 1, 4);
-xlim([data.tspan(1) data.tspan(end)]/cspice_spd);
+yline(3*data.sigmaMeas, 'LineWidth', 5, '-r')
+yline(-3*data.sigmaMeas, 'LineWidth', 5, '-r')
+xlim([data.tspan(1) data.tspan(end)]/cspice_spd)
 num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
 tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
 tick_values = data.tspan(tick_indices) / cspice_spd();
 tick_labels = cell(num_ticks, 1); 
@@ -148,19 +118,17 @@ end
 xticks(tick_values);
 xticklabels(tick_labels);
 xtickangle(0);
-set(gca, 'FontSize', 25)
-% Remove x-ticks from all but the last subplot
-for i = 1:3
-    subplot(4, 1, i);
-    set(gca, 'XTickLabel', []);
-end
-legend('Error', '$\pm 3\sigma$', 'FontSize', 25, 'Location', 'northeast');
-han = axes(gcf, 'Visible', 'off'); 
-han.Title.Visible = 'on';
-han.XLabel.Visible = 'on';
-han.YLabel.Visible = 'on';
-xlabel(han, '2024-NOV-18', 'FontSize', 30);
-ylabel(han, 'Errors [km]', 'FontSize', 30);
+legend('Range Error', '$\pm 3\sigma$', 'FontSize', 30)
+xlabel('2024-NOV-18', 'FontSize', 35)
+xlabel('Error', 'FontSize', 35)
+
+figure()
+plot(data.tspan, realMeasurements.position(:, 1) - xx(:, 1))
+hold on
+plot(data.tspan, realMeasurements.position(:, 2) - xx(:, 2))
+plot(data.tspan, realMeasurements.position(:, 3) - xx(:, 3))
+yline(3*data.sigmaMeas, 'LineWidth', 1)
+yline(-3*data.sigmaMeas, 'LineWidth', 1)
 
 %% 3. Estimate the lunar orbiter absolute state:
 
