@@ -170,7 +170,7 @@ results.ex2b.errVel = errDim(2);
 [tt, xx] = propagate(vars_opt2(1:4), vars_opt2(5), vars_opt2(6), constants, settings);
 XX_ss = rot2ECI(tt, xx, constants);
 
-% Plot:
+%% Plot:
 figure()
 plot(xx(:, 1), xx(:, 2), 'k', 'DisplayName', 'Trajectory')
 grid on
@@ -182,8 +182,8 @@ plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
 xlabel('x [-]')
 ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
-subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
+% title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
+% subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
 xlim([-1.5 2.25])
 legend('FontSize', 25);
 
@@ -198,8 +198,8 @@ grid on
 axis equal
 xlabel('x [-]')
 ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
-subtitle('[@Earth ECI]', 'FontSize', 18)
+% title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
+% subtitle('[@Earth ECI]', 'FontSize', 18)
 xlim([-1.25 2.5])
 legend('FontSize', 25);
 
