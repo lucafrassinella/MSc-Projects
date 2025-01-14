@@ -7,7 +7,6 @@
 
 clearvars; close all; clc;
 cspice_kclear()
-
 plotSettings;
 addpath('.\kernels\')
 addpath('.\sgp4\')
@@ -103,19 +102,27 @@ realMeasurements.svalbard.elevation = realMeasurements.svalbard_mat(:, 3)';
 
 %%%% Plots:
 figure()
-plot(visibleCoords.kourou_TBP.azimuth, visibleCoords.kourou_TBP.elevation, 'MarkerSize', 15)
 hold on
-plot(visibleCoords.kourou_real.azimuth, visibleCoords.kourou_real.elevation, 'MarkerSize', 15)
-plot(visibleCoords.troll_TBP.azimuth, visibleCoords.troll_TBP.elevation, 'MarkerSize', 15)
-plot(visibleCoords.troll_real.azimuth, visibleCoords.troll_real.elevation, 'MarkerSize', 15)
-plot(visibleCoords.svalbard_TBP.azimuth, visibleCoords.svalbard_TBP.elevation, 'MarkerSize', 15)
-plot(visibleCoords.svalbard_real.azimuth, visibleCoords.svalbard_real.elevation, 'MarkerSize', 15)
-legend('KOUROU (Kepler)', 'KOUROU (SGP4 with noise)', 'KOUROU (Kepler)', 'KOUROU (SGP4 with noise)')
+plot(visibleCoords.kourou_TBP.azimuth, visibleCoords.kourou_TBP.elevation, 'x', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0, 0.4470, 0.7410], 'LineWidth', 1.5)
+plot(visibleCoords.kourou_real.azimuth, visibleCoords.kourou_real.elevation, '*', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.8500, 0.3250, 0.0980], 'LineWidth', 1.5) 
+plot(visibleCoords.troll_TBP.azimuth, visibleCoords.troll_TBP.elevation, 'x', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.9290, 0.6940, 0.1250], 'LineWidth', 1.5) 
+plot(visibleCoords.troll_real.azimuth, visibleCoords.troll_real.elevation, '*', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.4940, 0.1840, 0.5560], 'LineWidth', 1.5) 
+plot(visibleCoords.svalbard_TBP.azimuth, visibleCoords.svalbard_TBP.elevation, 'x', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.4660, 0.6740, 0.1880], 'LineWidth', 1.5) 
+plot(visibleCoords.svalbard_real.azimuth, visibleCoords.svalbard_real.elevation, '*', ...
+    'MarkerSize', 15, 'MarkerEdgeColor', [0.3010, 0.7450, 0.9330], 'LineWidth', 1.5)
+legend('KOUROU (Kepler)', 'KOUROU (SGP4 with noise)', 'TROLL (Kepler)', ...
+    'TROLL (SGP4 with noise)', 'SVALBARD (Kepler)', 'SVALBARD (SGP4 with noise)')
 axis([-180, 180, 0, 90])
 ax = gca;
 ax.FontSize = 25;
 xlabel('Azimuth [deg]', 'FontSize', 30)
 ylabel('Elevation [deg]', 'FontSize', 30)
+
 
 
 
@@ -267,7 +274,118 @@ navigationSol_case3.pos = sqrt(trace(navigationSol_case3.P(1:3,1:3)));
 navigationSol_case3.vel = sqrt(trace(navigationSol_case3.P(4:6,4:6)));
 % Linear Mapping:
 [navigationSol_case3.std_a, navigationSol_case3.std_i] = linMap(navigationSol_case3.state, navigationSol_case3.P, constants);
-toc
+
+%% 5. Long-Term Analysis:
+
+% Set time of observation campaign to reference epoch +/- 5 hours:
+data_LTA.et0 = data.refEpoch - 5*60*60;
+data_LTA.etf = data.refEpoch + 5*60*60;
+data_LTA.refEpoch = data.refEpoch;
+data_LTA.sat = data.sat;
+
+[kourou_LTA, tv_kourou, ~] = scLocalCoords(x0, kourou, constants, data_LTA, settings, 'SGP4', 0);
+[troll_LTA, tv_troll, ~] = scLocalCoords(x0, troll, constants, data_LTA, settings, 'SGP4', 0);
+[svalbard_LTA, tv_svalbard, ~] = scLocalCoords(x0, svalbard, constants, data_LTA, settings, 'SGP4', 0);
+
+% Ideal Measurements:
+kourou_LTA_id = [kourou_LTA.range', kourou_LTA.azimuth', kourou_LTA.elevation'];
+troll_LTA_id = [troll_LTA.range', troll_LTA.azimuth', troll_LTA.elevation'];
+kourou_LTA_id = [kourou_LTA.range', kourou_LTA.azimuth', kourou_LTA.elevation'];
+
+% Real Measurements using measurement covariance matrix for each station:
+kourou_LTA_real = mvnrnd(kourou_LTA_id, kourou.R);
+troll_LTA_real = mvnrnd(troll_LTA_id, troll.R);
+kourou_LTA_real = mvnrnd(kourou_LTA_id, kourou.R);
+
+% Extract real simulated elevation:
+kourou_LTA_el = kourou_LTA_real(:, 3)';
+kourou_LTA_el = kourou_LTA_real(:, 3)';
+kourou_LTA_el = kourou_LTA_real(:, 3)';
+
+% Plot over augmented time window:
+
+% Kourou:
+figure()
+plot(tv_kourou / cspice_spd(), kourou_LTA_el, '-k')
+hold on
+plot(data.refEpoch*ones(100, 1)/cspice_spd, linspace(min(kourou_LTA_el)-10, max(kourou_LTA_el)+10, 100), '--r', 'DisplayName', 'Reference Time')
+plot(tv_kourou / cspice_spd(), ones(length(tv_kourou))*kourou.minEl, '--b', 'DisplayName', 'Minimum Elevation')
+xlim([tv_kourou(1) tv_kourou(end)]/cspice_spd())
+ylim([min(kourou_LTA_el)-10 max(kourou_LTA_el)+10])
+num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
+tick_indices = round(linspace(1, length(tv_kourou), num_ticks)); 
+tick_values = tv_kourou(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(tv_kourou(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+xlabel('18-NOV-2024', 'FontSize', 40)
+ylabel('Elevation [deg]', 'FontSize', 40)
+legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
+title('SMOS elevation over KOUROU (Long-Term Analysis')
+
+% Troll:
+figure()
+plot(tv_kourou / cspice_spd(), kourou_LTA_el, '-k')
+hold on
+plot(data.refEpoch*ones(100, 1)/cspice_spd, linspace(min(kourou_LTA_el)-10, max(kourou_LTA_el)+10, 100), '--r', 'DisplayName', 'Reference Time')
+plot(tv_kourou / cspice_spd(), ones(length(tv_kourou))*kourou.minEl, '--b', 'DisplayName', 'Minimum Elevation')
+xlim([tv_kourou(1) tv_kourou(end)]/cspice_spd())
+ylim([min(kourou_LTA_el)-10 max(kourou_LTA_el)+10])
+num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
+tick_indices = round(linspace(1, length(tv_kourou), num_ticks)); 
+tick_values = tv_kourou(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(tv_kourou(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+xlabel('18-NOV-2024', 'FontSize', 40)
+ylabel('Elevation [deg]', 'FontSize', 40)
+legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
+title('SMOS elevation over KOUROU (Long-Term Analysis')
+
+% Svalbard:
+figure()
+plot(tv_kourou / cspice_spd(), kourou_LTA_el, '-k')
+hold on
+plot(data.refEpoch*ones(100, 1)/cspice_spd, linspace(min(kourou_LTA_el)-10, max(kourou_LTA_el)+10, 100), '--r', 'DisplayName', 'Reference Time')
+plot(tv_kourou / cspice_spd(), ones(length(tv_kourou))*kourou.minEl, '--b', 'DisplayName', 'Minimum Elevation')
+xlim([tv_kourou(1) tv_kourou(end)]/cspice_spd())
+ylim([min(kourou_LTA_el)-10 max(kourou_LTA_el)+10])
+num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
+tick_indices = round(linspace(1, length(tv_kourou), num_ticks)); 
+tick_values = tv_kourou(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(tv_kourou(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+xlabel('18-NOV-2024', 'FontSize', 40)
+ylabel('Elevation [deg]', 'FontSize', 40)
+legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
+title('SMOS elevation over KOUROU (Long-Term Analysis')
+
+
+
+
+
 
 %% Functions
 

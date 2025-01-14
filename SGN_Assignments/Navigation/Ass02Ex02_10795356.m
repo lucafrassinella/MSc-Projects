@@ -200,16 +200,6 @@ navigationSol_c.vel = sqrt(trace(navigationSol_c.P(4:6,4:6)));
 % Linear Mapping:
 [navigationSol_c.std_a, navigationSol_c.std_i] = linMap(navigationSol_c.state, navigationSol_c.P, constants);
 
-%%%%%% RESULTS:
-% 3.a:
-fprintf('3.a) Results considering KOUROU Station only:\n')
-printNavSolution(navigationSol_a)
-% 3.b:
-fprintf('3.b) Results considering all the Stations (KOUROU, TROLL, SVALBARD):\n')
-printNavSolution(navigationSol_b)
-% 3.c
-fprintf('3.c) Results considering all the Stations (KOUROU, TROLL, SVALBARD) and J2 Perturbation:\n')
-printNavSolution(navigationSol_c)
 
 %% 4. Trade-Off Analysis:
 
@@ -274,6 +264,117 @@ navigationSol_case3.pos = sqrt(trace(navigationSol_case3.P(1:3,1:3)));
 navigationSol_case3.vel = sqrt(trace(navigationSol_case3.P(4:6,4:6)));
 % Linear Mapping:
 [navigationSol_case3.std_a, navigationSol_case3.std_i] = linMap(navigationSol_case3.state, navigationSol_case3.P, constants);
+
+%% 5. Long-Term Analysis:
+
+% Set time of observation campaign to reference epoch +/- 5 hours:
+data_LTA.et0 = data.refEpoch - 5*60*60;
+data_LTA.etf = data.refEpoch + 5*60*60;
+data_LTA.refEpoch = data.refEpoch;
+data_LTA.sat = data.sat;
+
+[kourou_LTA, tv_kourou, ~] = scLocalCoords(x0, kourou, constants, data_LTA, settings, 'SGP4', 0);
+[troll_LTA, tv_troll, ~] = scLocalCoords(x0, troll, constants, data_LTA, settings, 'SGP4', 0);
+[svalbard_LTA, tv_svalbard, ~] = scLocalCoords(x0, svalbard, constants, data_LTA, settings, 'SGP4', 0);
+
+% Ideal Measurements:
+kourou_LTA_id = [kourou_LTA.range', kourou_LTA.azimuth', kourou_LTA.elevation'];
+troll_LTA_id = [troll_LTA.range', troll_LTA.azimuth', troll_LTA.elevation'];
+svalbard_LTA_id = [svalbard_LTA.range', svalbard_LTA.azimuth', svalbard_LTA.elevation'];
+
+% Real Measurements using measurement covariance matrix for each station:
+kourou_LTA_real = mvnrnd(kourou_LTA_id, kourou.R);
+troll_LTA_real = mvnrnd(troll_LTA_id, troll.R);
+svalbard_LTA_real = mvnrnd(svalbard_LTA_id, svalbard.R);
+
+% Extract real simulated elevation:
+kourou_LTA_el = kourou_LTA_real(:, 3)';
+troll_LTA_el = troll_LTA_real(:, 3)';
+svalbard_LTA_el = svalbard_LTA_real(:, 3)';
+
+% Plot over augmented time window:
+% Kourou:
+figure()
+plot(tv_kourou / cspice_spd(), kourou_LTA_el, '-k')
+hold on
+plot(data.refEpoch*ones(100, 1)/cspice_spd, linspace(min(kourou_LTA_el)-10, max(kourou_LTA_el)+10, 100), '--r', 'DisplayName', 'Reference Time')
+plot(tv_kourou / cspice_spd(), ones(length(tv_kourou))*kourou.minEl, '--b', 'DisplayName', 'Minimum Elevation')
+xlim([tv_kourou(1) tv_kourou(end)]/cspice_spd())
+ylim([min(kourou_LTA_el)-10 max(kourou_LTA_el)+10])
+num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
+tick_indices = round(linspace(1, length(tv_kourou), num_ticks)); 
+tick_values = tv_kourou(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(tv_kourou(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+xlabel('18-NOV-2024', 'FontSize', 40)
+ylabel('Elevation [deg]', 'FontSize', 40)
+legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
+title('SMOS elevation over KOUROU (Long-Term Analysis')
+
+% Troll:
+figure()
+plot(tv_troll / cspice_spd(), troll_LTA_el, '-k')
+hold on
+plot(data.refEpoch*ones(100, 1)/cspice_spd, linspace(min(troll_LTA_el)-10, max(troll_LTA_el)+10, 100), '--r', 'DisplayName', 'Reference Time')
+plot(tv_troll / cspice_spd(), ones(length(tv_troll))*troll.minEl, '--b', 'DisplayName', 'Minimum Elevation')
+xlim([tv_troll(1) tv_troll(end)]/cspice_spd())
+ylim([min(troll_LTA_el)-10 max(troll_LTA_el)+10])
+num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
+tick_indices = round(linspace(1, length(tv_troll), num_ticks)); 
+tick_values = tv_troll(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(tv_troll(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+xlabel('18-NOV-2024', 'FontSize', 40)
+ylabel('Elevation [deg]', 'FontSize', 40)
+legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
+title('SMOS elevation over TROLL (Long-Term Analysis')
+
+% Svalbard:
+figure()
+plot(tv_svalbard / cspice_spd(), svalbard_LTA_el, '-k')
+hold on
+plot(data.refEpoch*ones(100, 1)/cspice_spd, linspace(min(svalbard_LTA_el)-10, max(svalbard_LTA_el)+10, 100), '--r', 'DisplayName', 'Reference Time')
+plot(tv_svalbard / cspice_spd(), ones(length(tv_svalbard))*svalbard.minEl, '--b', 'DisplayName', 'Minimum Elevation')
+xlim([tv_svalbard(1) tv_svalbard(end)]/cspice_spd())
+ylim([min(svalbard_LTA_el)-10 max(svalbard_LTA_el)+10])
+num_ticks = 5;
+ax = gca;
+ax.FontSize = 25;
+tick_indices = round(linspace(1, length(tv_svalbard), num_ticks)); 
+tick_values = tv_svalbard(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(tv_svalbard(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+xlabel('18-NOV-2024', 'FontSize', 40)
+ylabel('Elevation [deg]', 'FontSize', 40)
+legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
+title('SMOS elevation over SVALBARD (Long-Term Analysis')
+
+toc
+
+
+
 
 %% Functions
 
@@ -415,8 +516,7 @@ end
 
 function [dxx] = PTBP(t, xx, constants)
 % Computes the time derivative of the state vector for Keplerian taking
-% into account the J2 perturbation
-% motion. 
+% into account the J2 perturbation motion. 
 %
 % INPUT:
 %   et          : [1, 1] Ephemeris time (TDB) in seconds.
@@ -635,7 +735,7 @@ function residuals = costFunction(x0, stations, odeFun, data, settings)
 %   settings   - structure containing problem settings
 %
 % Output:
-%   residual   - Residuals
+%   residual   - Residuals of the cost function to be minimized
 % -------------------------------------------------------------------------
 
 % Collect data from ground stations:
@@ -875,18 +975,6 @@ ax.FontSize = 25;
 xlabel('Azimuth [deg]', 'FontSize', 30)
 ylabel('Elevation [deg]', 'FontSize', 30)
 
-end
-
-function printNavSolution(navigationSol)
-
-fprintf('Navigation Solution (Cartesian State):\n POSITION in ECI: %.10f %.10f %.10f\n VELOCITY in ECI: %.10f %.10f %.10f\n\n',...
-        navigationSol.state(1), navigationSol.state(2), navigationSol.state(3), navigationSol.state(4), navigationSol.state(5), navigationSol.state(6))
-
-fprintf('Square root of the trace of the estimated covariance submatrix:\n POSITION SUBMATRIX: %.10f\n VELOCITY SUBMATRIX: %.10f\n\n',...
-        navigationSol.pos, navigationSol.vel)
-
-fprintf('Standard Deviation:\n SEMI-MAJOR AXIS: %.10f\n INCLINATION: %.10f\n\n',...
-        navigationSol.std_a, navigationSol.std_i)
 end
 
 function plotSettings
