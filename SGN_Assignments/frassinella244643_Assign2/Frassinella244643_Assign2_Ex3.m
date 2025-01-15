@@ -251,8 +251,8 @@ stateLander = cspice_spkezr(lander.name, data.tspan, 'IAU_MOON', 'NONE', 'MOON')
 results.ex4.xx_aug = augMean_mat;
 results.ex4.P_aug = augCov_mat;
 % Store results at final time:
-results.ex4.mean = augMean_mat(:, end);
-results.ex4.cov = augCov_mat(:, :, end);
+results.ex4.final_mean = augMean_mat(:, end);
+results.ex4.final_cov = augCov_mat(:, :, end);
  
 % Errors:
 errPos = zeros(1,length(data.tspan));
@@ -343,7 +343,7 @@ xticklabels(tick_labels);
 xtickangle(0);
 
 %% Clear Workspace:
-clearvars -except
+clearvars -except results constants data idealMeasurements realMeasurements
 
 %% Functions:
 

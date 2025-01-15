@@ -8,11 +8,8 @@
 clearvars; close all; clc;
 cspice_kclear()
 plotSettings;
-% addpath('.\kernels\')
 addpath('.\sgp4\')
 addpath('.\tle\')
-% addpath('.\mice\src\mice')
-% addpath('.\mice\lib')
 cspice_furnsh('assignment02.tm')
 
 % Initialize data:
@@ -271,6 +268,10 @@ navigationSol_case3.vel = sqrt(trace(navigationSol_case3.P(4:6,4:6)));
 % Linear Mapping:
 [navigationSol_case3.std_a, navigationSol_case3.std_i] = linMap(navigationSol_case3.state, navigationSol_case3.P, constants);
 
+results.ex4.Kourou_Troll = navigationSol_case1;
+results.ex4.Kourou_Svalbard = navigationSol_case2;
+results.ex4.Troll_Svalbard = navigationSol_case3;
+
 %% 5. Long-Term Analysis:
 
 % Set time of observation campaign to reference epoch +/- 5 hours:
@@ -377,8 +378,8 @@ ylabel('Elevation [deg]', 'FontSize', 40)
 legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
 title('SMOS elevation over SVALBARD (Long-Term Analysis')
 
-
-
+%% Clear Workspace:
+clearvars -except data data_LTA idealMeasurements realMeasurements kourou troll svalbard settings results
 
 %% Functions
 

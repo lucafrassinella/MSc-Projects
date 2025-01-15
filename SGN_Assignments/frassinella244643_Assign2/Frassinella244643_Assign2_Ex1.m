@@ -264,7 +264,7 @@ function [x_mean, P, ss_points] = UT(x0, P0, parameters)
 %       - ss_points: final propagated sigma points [n, 2n+1]
 % ----------------------------------------------------------------------- %
 
-% Extract parameters
+% Extract parameters:
 ti = parameters.ti;
 tfinal = parameters.tfinal;
 odeOptions = parameters.odeOptions;
@@ -280,7 +280,6 @@ P = zeros(n);
 chi = zeros(n, 2*n+1);
 ll = alpha^2 * n - n;
 mat = sqrtm((n + ll)*P0);
-
 chi(:, 1) = x0;
 for i = 1:n
     chi(:, i + 1)     = x0 + mat(:, i);
@@ -408,7 +407,7 @@ function parameters = loadConstants()
 GM_Earth = cspice_bodvrd('EARTH', 'GM', 1);
 GM_Moon = cspice_bodvrd('MOON', 'GM', 1);
 
-
+% Parameters:
 parameters.constants.mu = GM_Moon/(GM_Earth + GM_Moon); % Earth-Moon system gravity constant
 parameters.constants.ms = 3.28900541e05;       
 parameters.constants.rho = 3.88811143e02;      
@@ -416,6 +415,7 @@ parameters.constants.om_s = -9.25195985e-01;
 parameters.constants.TU = 4.34811305;      % [days]    Time unit
 parameters.constants.DU = 3.84405000e05;   % [km]      Distance unit
 parameters.constants.VU = 1.02454018;      % [km/s]    Velocity unit
+
 end
 
 function [dxdt] = PBRFBP_STM(t, mu, xx)
@@ -490,7 +490,8 @@ function [xxf, tf, xx, tt, PHI] = propagatorSTM(xx0, t0, tf, mu)
 %       - tf: final time [1, 1]
 %       - PHI: STM at final time [4, 4]
 % ----------------------------------------------------------------------- %
- 
+
+% Append initial STM at initial state vector:
 PHI0 = eye(4); % STM at t0
 xx0 = [xx0; PHI0(:)]; % new vector of initial conditions (appended with STM)
 

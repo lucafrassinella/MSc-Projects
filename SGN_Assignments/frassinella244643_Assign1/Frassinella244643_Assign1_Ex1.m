@@ -560,25 +560,23 @@ function plotSettings
 %-------------------------------------------------------------------------%
 % Settings for figure plots
 %-------------------------------------------------------------------------%
+
 % Setting Lines:
 set(0, 'defaultLineLineWidth', 1.6);
 set(0,'defaultLineMarkerSize', 4) ;
+set(0,'defaultLineMarkerEdgeColor', 'k')
 set(0,'defaultLineMarkerFaceColor', 'auto')
-set(0, 'defaultLineMarkerEdgeColor', 'auto')
 % Setting Interpreter:
 set(0, 'defaultTextInterpreter', 'latex')
 set(0, 'defaultLegendInterpreter', 'latex')
 set(0, 'defaultAxesTickLabelInterpreter', 'latex')
 % Setting Legends:
-set(0, 'defaultLegendLocation','northwest');
+set(0, 'defaultLegendLocation','southwest');
 set(0, 'defaultLegendOrientation', 'vertical');
 set(0, 'defaultLegendFontSize', 12);
 % Setting Axes:
-set(groot,'defaultAxesXMinorGrid','on','defaultAxesXMinorGridMode','manual');
-set(groot,'defaultAxesYMinorGrid','on','defaultAxesYMinorGridMode','manual');
+set(0, 'defaultAxesXMinorGrid', 'on');
+set(0,'defaultAxesYMinorGrid','on');
 set(0, 'defaultAxesFontSize', 20);
-set(groot, 'defaultAxesFontName', 'Palatino Linotype', 'defaultTextFontName', 'Palatino Linotype');
-set(groot, 'defaultAxesFontWeight', 'bold');
-set(groot, 'defaultAxesTickLabelInterpreter', 'latex')
 
 end
