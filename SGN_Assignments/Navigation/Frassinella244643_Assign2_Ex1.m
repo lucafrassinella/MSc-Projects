@@ -411,9 +411,9 @@ GM_Moon = cspice_bodvrd('MOON', 'GM', 1);
 
 
 parameters.constants.mu = GM_Moon/(GM_Earth + GM_Moon); % Earth-Moon system gravity constant
-parameters.constants.ms = 3.28900541e05;       % [??]
-parameters.constants.rho = 3.88811143e02;      % [??]
-parameters.constants.om_s = -9.25195985e-01;   % [??]
+parameters.constants.ms = 3.28900541e05;       
+parameters.constants.rho = 3.88811143e02;      
+parameters.constants.om_s = -9.25195985e-01;   
 parameters.constants.TU = 4.34811305;      % [days]    Time unit
 parameters.constants.DU = 3.84405000e05;   % [km]      Distance unit
 parameters.constants.VU = 1.02454018;      % [km/s]    Velocity unit

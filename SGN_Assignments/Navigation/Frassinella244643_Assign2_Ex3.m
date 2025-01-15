@@ -9,11 +9,8 @@ clearvars; close all; clc;
 cspice_kclear()
 rng default
 plotSettings;
-addpath('.\kernels\')
 addpath('.\sgp4\')
 addpath('.\tle\')
-addpath('.\mice\src\mice')
-addpath('.\mice\lib')
 cspice_furnsh('assignment02.tm')
 
 % Load dataset:
