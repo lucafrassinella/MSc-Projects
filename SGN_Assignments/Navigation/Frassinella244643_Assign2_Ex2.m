@@ -15,7 +15,6 @@ addpath('.\mice\src\mice')
 addpath('.\mice\lib')
 cspice_furnsh('assignment02.tm')
 
-tic
 % Initialize data:
 [kourou, troll, svalbard] = loadStationData();
 [constants, data, settings] = loadSet();
@@ -370,8 +369,6 @@ xlabel('18-NOV-2024', 'FontSize', 40)
 ylabel('Elevation [deg]', 'FontSize', 40)
 legend('Elevation', 'Reference Time', 'Minimum Elevation', 'FontSize', 35)
 title('SMOS elevation over SVALBARD (Long-Term Analysis')
-
-toc
 
 
 

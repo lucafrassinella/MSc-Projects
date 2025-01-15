@@ -7,7 +7,7 @@
 
 clearvars; close all; clc;
 cspice_kclear()
-
+rng default
 plotSettings;
 addpath('.\kernels\')
 addpath('.\sgp4\')
