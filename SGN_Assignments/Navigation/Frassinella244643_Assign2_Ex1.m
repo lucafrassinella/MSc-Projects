@@ -82,7 +82,7 @@ for i = 2 : N + 1
     [mc.x_mean(:, i), mc.P(:, :, i), finalStates] = monteCarlo(mc.x0, parameters);
 end
 
-%% Outputs:
+%% Outputs and Plots:
 
 % Plot of mean and covariance ellipses:
 mean_ut = ut.states(:, end);
@@ -120,6 +120,7 @@ for i = 2 : N+1
     eigMaxPv(i,3) = 3*sqrt(max(eig(mc.P(3:4, 3:4, i))));
 end
 
+% Position submatrix:
 figure()
 plot(tvec, eigMaxPr(:, 1), '--x', 'Color', 'r', 'MarkerEdgeColor', 'r', 'MarkerSize', 8)
 hold on
@@ -132,6 +133,7 @@ xlabel('TU [-]', 'FontSize', 35)
 ylabel('$3\sqrt{\mathrm{max}\lambda_i}P_{rr}$', 'FontSize', 35)
 legend('LinCov', 'UT', 'MC', 'FontSize', 40)
 
+% Velocity submatrix:
 figure()
 plot(tvec, eigMaxPv(:, 1), '--x', 'Color', 'r', 'MarkerEdgeColor', 'r', 'MarkerSize', 8)
 hold on
@@ -169,14 +171,11 @@ end
 function [dxdt] = PBRFBP(t, xx, parameters)
 % ----------------------------------------------------------------------- %
 % PBRFBP - Function to compute the RHS of the equations of motion for the 
-% Planar Bicircular Restricted Four-Body Problem (PBRFBP), both state and 
-% State Transition Matrix (if requested).
+% Planar Bicircular Restricted Four-Body Problem (PBRFBP).
 %
 % Inputs:
 %   - t: Current time [1, 1]
-%   - xx: Current state vector (with or without appended STM):
-%               - [4,1] if without STM
-%               - [20, 1] if with STM
+%   - xx: Current state vector [4,1]
 %   - parameters - structure containing constants of the problem:
 %               - parameters.mu: Mass ratio between the two primary bodies,
 %               - parameters.ms: Mass of the smaller third body (e.g., a spacecraft),
@@ -203,43 +202,37 @@ om_s = parameters.constants.om_s;
 dOMdx = x - (ms*cos(om_s*t))/rho^2 - (mu*(mu + x - 1))/((mu + x - 1)^2 + y^2)^(3/2) + ((2*mu + 2*x)*(mu - 1))/(2*((mu + x)^2 + y^2)^(3/2)) - (ms*(2*x - 2*rho*cos(om_s*t)))/(2*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2));
 dOMdy = y - (ms*sin(om_s*t))/rho^2 - (mu*y)/((mu + x - 1)^2 + y^2)^(3/2) - (ms*(2*y - 2*rho*sin(om_s*t)))/(2*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2)) + (y*(mu - 1))/((mu + x)^2 + y^2)^(3/2);
 
-
-if length(xx) == 20
-    % If STM is appended, compute also the derivative of STM with
-    % variational approach:
-    dxdt = zeros(20, 1);
-    phi = reshape(xx(5:end), 4, 4);
-    A = zeros(4, 4);
-    A(1, 3) = 1;
-    A(2, 4) = 1;
-    A(3, 1) = (mu - 1)/((mu + x)^2 + y^2)^(3/2) - mu/((mu + x - 1)^2 + y^2)^(3/2) - ms/((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2) - (3*(mu + x)^2*(mu - 1))/((mu + x)^2 + y^2)^(5/2) + (3*ms*(x - rho*cos(om_s*t))^2)/((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(5/2) + (3*mu*(mu + x - 1)^2)/((mu + x - 1)^2 + y^2)^(5/2) + 1;
-    A(3, 2) = (3*ms*(2*x - 2*rho*cos(om_s*t))*(2*y - 2*rho*sin(om_s*t)))/(4*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(5/2)) + (3*mu*y*(2*mu + 2*x - 2))/(2*((mu + x - 1)^2 + y^2)^(5/2)) - (3*y*(2*mu + 2*x)*(mu - 1))/(2*((mu + x)^2 + y^2)^(5/2));
-    A(3, 4) = 2;
-    A(4, 1) = (3*ms*(2*x - 2*rho*cos(om_s*t))*(2*y - 2*rho*sin(om_s*t)))/(4*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(5/2)) + (3*mu*y*(2*mu + 2*x - 2))/(2*((mu + x - 1)^2 + y^2)^(5/2)) - (3*y*(2*mu + 2*x)*(mu - 1))/(2*((mu + x)^2 + y^2)^(5/2));
-    A(4, 2) = (mu - 1)/((mu + x)^2 + y^2)^(3/2) - mu/((mu + x - 1)^2 + y^2)^(3/2) - ms/((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2) - (3*y^2*(mu - 1))/((mu + x)^2 + y^2)^(5/2) + (3*ms*(y - rho*sin(om_s*t))^2)/((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(5/2) + (3*mu*y^2)/((mu + x - 1)^2 + y^2)^(5/2) + 1;
-    A(4, 3) = -2;
-    dphi = A*phi;
-    dxdt(5:end) = reshape(dphi, 16, 1);
-else
-    % If STM not appended, compute derivative only of the state:
+% compute derivative of the state:
     dxdt = zeros(4, 1);
     dxdt(1:2) = xx(3:4);
     dxdt(3) = 2*vy + dOMdx;
     dxdt(4) = -2*vx + dOMdy;
-end
+
 end
 
 function [x, P] = LinCov(x0, P0, parameters)
+% ----------------------------------------------------------------------- %
+% LinCov - Function to propagate mean state and covariance matrix through a 
+% linear covariance transformation
+%
+%   Inputs:
+%       - x0: Initial state vector [4, 1]
+%       - P0: Initial covariance matrix [4, 4]
+%       - parameters: Struct containing data and constants:
+%           - parameters.mu: gravitational parameter
+%           - parameters.ti: initial propagation time
+%           - parameters.tf: final propagation time
+%
+%   Outputs:
+%       - x: Final mean state vector after integration [4, 1]
+%       - P: Final covariance matrix  [4, 4]
+% ----------------------------------------------------------------------- %
+
+% Extract initial and final time:
 ti = parameters.ti;
 tfinal = parameters.tfinal;
 
-% % Solve the Planar Bi-circular Restricted Four Body Problem:
-% % Integrate:
-% optset = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
-% [~, x] = ode78(@(t,xx) PBRFBP_STM(t, xx, parameters), [ti, tfinal], x0, optset);
-
-% % Final state vector:
-% x = x(end, :);
+% Integrate the Planar Bi-circular Restricted Four Body Problem:
 mu = parameters.constants.mu;
 [xxf, ~, ~, ~, phi] = propagatorSTM(x0, ti, tfinal, mu);
 
@@ -250,7 +243,29 @@ P = phi * P0 * phi';
 
 end
 
-function [y_mean, P, ss_points] = UT(x0, P0, parameters)
+function [x_mean, P, ss_points] = UT(x0, P0, parameters)
+% ----------------------------------------------------------------------- %
+% UT - Function to propagate mean state and covariance matrix through an 
+% unscented transform
+%
+%   Inputs:
+%       - x0: Initial state vector [4, 1]
+%       - P0: Initial covariance matrix [4, 4]
+%       - parameters: Struct containing data and constants:
+%           - parameters.mu: gravitational parameter
+%           - parameters.ti: initial propagation time
+%           - parameters.tf: final propagation time
+%           - parameters.odeOptions: options for ode solver
+%           - parameters.ut.alpha: alpha parameter for Unscented Transform
+%           - parameters.ut.beta: beta parameter for Unscented Transform
+%
+%   Outputs:
+%       - x_mean: Final mean state vector after integration [4, 1]
+%       - P: Final covariance matrix  [4, 4]
+%       - ss_points: final propagated sigma points [n, 2n+1]
+% ----------------------------------------------------------------------- %
+
+
 ti = parameters.ti;
 tfinal = parameters.tfinal;
 odeOptions = parameters.odeOptions;
@@ -258,8 +273,8 @@ alpha = parameters.ut.alpha;
 beta = parameters.ut.beta;
 n = length(x0);
 
-% Initialize y_mean and P:
-y_mean = zeros(n, 1);
+% Initialize x_mean and P:
+x_mean = zeros(n, 1);
 P = zeros(n);
 
 % Compute sigma points:
@@ -281,22 +296,41 @@ weight_cov(1)  = ll/(n+ll) + (1 - alpha^2 + beta);
 weight_mean(2:end) = 1/(2*(n+ll))*ones(2*n, 1);
 weight_cov(2:end)  = 1/(2*(n+ll))*ones(2*n, 1);
 
-% Propagate sigma points and compute y_mean and P:
+% Propagate sigma points and compute x_mean and P:
 ss_points = zeros(n, 2*n+1);
 for i = 1 : 2*n+1
     % Solve the Planar Bi-circular Restricted Four Body Problem:
     [~, x] = ode78(@PBRFBP, [ti, tfinal], chi(:, i), odeOptions, parameters);
     ss_points(:, i) = x(end, :)';
-    y_mean = y_mean + weight_mean(i)*ss_points(:, i);
+    x_mean = x_mean + weight_mean(i)*ss_points(:, i);
 end
 for i = 1 : 2*n+1
-    P = P + weight_cov(i)*(ss_points(:, i) - y_mean)*(ss_points(:, i) - y_mean)';
+    P = P + weight_cov(i)*(ss_points(:, i) - x_mean)*(ss_points(:, i) - x_mean)';
 end
 
 end
 
 function [x_mean, P, finalStates] = monteCarlo(x0, parameters)
+% ----------------------------------------------------------------------- %
+% monteCarlo - Function to propagate mean state and covariance matrix a
+% Monte Carlo simulation
+%
+%   Inputs:
+%       - x0: Initial state vector [4, 1]
+%       - parameters: Struct containing data and constants:
+%           - parameters.mu: gravitational parameter
+%           - parameters.ti: initial propagation time
+%           - parameters.tf: final propagation time
+%           - parameters.odeOptions: options for ode solver
+%           - parameters.populationSize: population size for the Monte Carlo
+%
+%   Outputs:
+%       - x_mean: Final mean state vector after integration [4, 1]
+%       - P: Final covariance matrix  [4, 4]
+%       - finalStates: final propagated states matrix [4, populationSize]
+% ----------------------------------------------------------------------- %
 
+% Extract Parameters
 odeOptions = parameters.odeOptions;
 ti = parameters.ti;
 tfinal = parameters.tfinal;
@@ -318,22 +352,33 @@ P = cov(finalStates');
 end
 
 function covarianceEllipse(mean, cov, sigma)
+% ----------------------------------------------------------------------- %
+% covarianceEllipse - function to compute and plot x and y coordinates of a
+% covariance ellipse given the mean position, covariance position submatrix 
+% and confidence level for sigma
+%
+% Inputs:
+%       - mean: mean state position [2, 1]
+%       - cov: position covariance submatrix [2, 2]
+%       - sigma: confidence level (1, 2 or 3)
+%
+% ----------------------------------------------------------------------- %
 
 % Build refernce circle:
 nPoints = 100;
 alpha = 2*pi/nPoints * (0:nPoints);
 circle = [cos(alpha); sin(alpha)];
 
-% SVD to extract eigenvalues and first eigenvector of cov matrix:
+% SVD to extract eigenvalues and first eigenvector of covariance matrix:
 [R, D] = svd(cov);
 eig1 = D(1,1);  
 eig2 = D(2,2);  
 eigv1 = R(:,1); 
 
-% Orientation angle (angle of the first eigenvector)
+% Orientation angle (angle of the first eigenvector):
 theta = atan2(eigv1(2), eigv1(1));
 
-% Scale the circle along the principal axes
+% Scale the circle along the principal axes:
 circle = [sqrt(eig1) * circle(1, :); sqrt(eig2) * circle(2, :)];
 
 % Rotate the scaled circle using the angle theta:
@@ -350,10 +395,15 @@ hold on;
 plot(mean(1), mean(2), 'x', 'MarkerEdgeColor', hLine.Color, 'MarkerSize', 15);
 grid on;
 
-
 end
 
 function parameters = loadConstants()
+% -------------------------------------------------------------------------
+% loadConstants - function to load constants, data and settings
+%
+%   Output:
+%       - parameters: struct containing constants, data and settings
+% -------------------------------------------------------------------------
 
 % Load Constants:
 GM_Earth = cspice_bodvrd('EARTH', 'GM', 1);
@@ -370,10 +420,21 @@ parameters.constants.VU = 1.02454018;      % [km/s]    Velocity unit
 end
 
 function [dxdt] = PBRFBP_STM(t, mu, xx)
+% ----------------------------------------------------------------------- %
+% PBRFBP - Function to compute the RHS of the equations of motion for the 
+% Planar Bicircular Restricted Four-Body Problem (PBRFBP) with STM
+% computation
+%
+% Inputs:
+%   - t: Current time [1, 1]
+%   - xx: Current state vector (with appended STM) [20, 1]
+%   - mu: Adimensional mass ratio between the two primary bodies
+%
+% Outputs:
+%   dxdt      - Derivative of the state vector  [20, 1]
+% ----------------------------------------------------------------------- %
 
-% Inputs: xx = [20x1]
-% Outputs: dxdt = [20x1]
-
+% Extract variables (state and STM):
 x = xx(1);
 y = xx(2);
 vx = xx(3);
@@ -381,11 +442,12 @@ vy = xx(4);
 
 PHI = reshape(xx(5: end), 4, 4);
 
-% DEFINE CONSTANTS:
+% Define constants for PBRFBP:
 ms = 3.28900541e05;
 rho = 3.88811143e02;
 om_s = -9.25195985e-01;
 
+% Derivative of scalar potential function:
 dOMdx = x - (ms*cos(om_s*t))/rho^2 - (mu*(mu + x - 1))/((mu + x - 1)^2 + y^2)^(3/2) + ((2*mu + 2*x)*(mu - 1))/(2*((mu + x)^2 + y^2)^(3/2)) - (ms*(2*x - 2*rho*cos(om_s*t)))/(2*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2));
 dOMdy = y - (ms*sin(om_s*t))/rho^2 - (mu*y)/((mu + x - 1)^2 + y^2)^(3/2) - (ms*(2*y - 2*rho*sin(om_s*t)))/(2*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2)) + (y*(mu - 1))/((mu + x)^2 + y^2)^(3/2);
 
@@ -399,30 +461,45 @@ A(4, 1) = (3*ms*(2*x - 2*rho*cos(om_s*t))*(2*y - 2*rho*sin(om_s*t)))/(4*((x - rh
 A(4, 2) = (mu - 1)/((mu + x)^2 + y^2)^(3/2) - mu/((mu + x - 1)^2 + y^2)^(3/2) - ms/((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2) - (3*y^2*(mu - 1))/((mu + x)^2 + y^2)^(5/2) + (3*ms*(y - rho*sin(om_s*t))^2)/((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(5/2) + (3*mu*y^2)/((mu + x - 1)^2 + y^2)^(5/2) + 1;
 A(4, 3) = -2;
 
+% Derivative of STM through variational approach:
 PhiDot = A * PHI;
 
+% Assemble RHS:
 dxdt = zeros(20, 1);
 dxdt(1:2) = xx(3:4);
 dxdt(3) = 2*vy + dOMdx;
 dxdt(4) = -2*vx + dOMdy;
 dxdt(5:end) = PhiDot(:);
+
 end
 
 function [xxf, tf, xx, tt, PHI] = propagatorSTM(xx0, t0, tf, mu)
-
-% Input: xx0 = 4x1
-% Output: xx = [:, 4x1] (solo gli stati)
-%         xxf = 4x1     (stato finale)
-%         tf = 1x1      (tempo finale)
-%         PHI = 4x4     (STM(t0, tf))
+% ----------------------------------------------------------------------- %
+% propagatorSTM - function to propagate PBRFBP dynamics with STM
+% computation
+%
+% Inputs:
+%       - xx0: initial state vector [4, 1]
+%       - t0: initial propagation time [1, 1]
+%       - tf: final propagation time [1, 1]
+%       - mu: Adimensional mass ratio between the two primary bodies
+% 
+% Outputs: 
+%       - xx: matrix of propagated states [n, 4]
+%       - tt: vector of propagation times [n, 1]
+%       - xxf: state at final time [4, 1]
+%       - tf: final time [1, 1]
+%       - PHI: STM at final time [4, 4]
+% ----------------------------------------------------------------------- %
  
 PHI0 = eye(4); % STM at t0
 xx0 = [xx0; PHI0(:)]; % new vector of initial conditions (appended with STM)
 
-
+% ODE propagation:
 optset = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 [tt, xxv] = ode78(@(t,xx) PBRFBP_STM(t, mu, xx), [t0 tf], xx0, optset);
 
+% Outputs:
 xx = xxv(:, 1:4)';
 PHI = xxv(end, 5:end);
 PHI = reshape(PHI, 4, 4);
