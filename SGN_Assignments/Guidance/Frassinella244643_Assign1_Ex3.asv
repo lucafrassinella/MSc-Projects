@@ -647,6 +647,8 @@ lvx = state(11);
 lvy = state(12);
 lvz = state(13);
 
+
+
 % Jacobian of the dynamics:
 F = zeros(14, 14);
 F(1, 4) = 1;
@@ -699,7 +701,6 @@ F(14, 11) = -(Tmax*lvx)/(m^2*(lvx^2 + lvy^2 + lvz^2)^(1/2));
 F(14, 12) = -(Tmax*lvy)/(m^2*(lvx^2 + lvy^2 + lvz^2)^(1/2));
 F(14, 13) = -(Tmax*lvz)/(m^2*(lvx^2 + lvy^2 + lvz^2)^(1/2));
 
-% Assemble Jacobian:
 Jacobian = F;
 
 end
@@ -724,31 +725,37 @@ function grad = objectiveJacobian(tfinal, statefinal, STM, data)
 %   - grad: matrix of gradients of objective function [8, 8]
 % ----------------------------------------------------------------------- %
 
-% Extract STM submatrices:
+% STM:
 STM_rrlr = STM(1:3, 8:10);
 STM_rrlv = STM(1:3, 11:13);
 STM_rrlm = STM(1:3, 14);
+
+
 STM_vvlr = STM(4:6, 8:10);
 STM_vvlv = STM(4:6, 11:13);
 STM_vvlm = STM(4:6, 14);
+
+
+
 STM_lmlr = STM(14, 8:10);
 STM_lmlv = STM(14, 11:13);
 STM_lmlm = STM(14, 14);
 
-% Compute Dynamics at final time:
+% Final Dynamics:
 dx = dynamics(tfinal, statefinal, data);
 dr = dx(1:3);
 dv = dx(4:6);
 dlm = dx(14);
 
-% Derivative of the Hamiltonian:
+% Hamiltonian:
 dxx = dx(1:7);
 dll = dx(8:14);
 STM_xxll = STM(1:7, 8:14);
 STM_llll = STM(8:14, 8:14);
 dHf = -dll' * STM_xxll + dxx' * STM_llll;
 
-% Assemble derivatives of the objective funcction wrt optimization variables:
+% Assemble Gradients:
+
 grad = [STM_rrlr STM_rrlv STM_rrlm dr;
         STM_vvlr STM_vvlv STM_vvlm dv;
         STM_lmlr STM_lmlv STM_lmlm, dlm
