@@ -7,7 +7,7 @@
 
 clearvars; close all; clc;
 cspice_kclear()
-rng default
+
 plotSettings;
 addpath('.\kernels\')
 addpath('.\sgp4\')
@@ -181,7 +181,71 @@ for ii = 2 : length(data.tspan)
                    data.tspan(ii-1), data.tspan(ii), realMeasurements.position(ii, :), data, settings, constants);
 end
 
-%% Plots:
+%% Store results at final time:
+results.ex3.mean = mean_mat(:, end);
+results.ex3.cov = cov_mat(:, :, end);
+
+% Errors:
+errPos = zeros(1,length(data.tspan));
+errVel = zeros(1,length(data.tspan));
+stdPos = zeros(1,length(data.tspan));
+stdVel = zeros(1,length(data.tspan));
+for i = 1:length(data.tspan)
+    errPos(i) = sqrt((xx(i,1) - mean_mat(1,i))^2 + (xx(i,2) - mean_mat(2,i))^2 +(xx(i,3) - mean_mat(3,i))^2);
+    errVel(i) = sqrt((xx(i,4) - mean_mat(4,i))^2 + (xx(i,5) - mean_mat(5,i))^2 +(xx(i,6) - mean_mat(6,i))^2 );
+    stdPos(i) = 3 * sqrt(trace(cov_mat(1:3,1:3, i)));
+    stdVel(i) = 3 * sqrt(trace(cov_mat(4:6,4:6, i)));
+end
+
+% Plot errors:
+
+subplot(1, 2, 1); 
+semilogy(data.tspan/cspice_spd, errPos, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+hold on;
+semilogy(data.tspan/cspice_spd, stdPos, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+xlabel('2024-NOV-18', 'FontSize', 40);
+ylabel('Position Error [km]', 'FontSize', 40);
+xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
+% title('Position Error and $3\sigma$');
+legend('FontSize', 25, 'Location', 'northeast');
+grid on;
+set(gca, 'FontSize', 20)
+num_ticks = 5;
+tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
+tick_values = data.tspan(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(data.tspan(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+
+% Subplot 2: Velocity Error
+subplot(1, 2, 2);
+semilogy(data.tspan/cspice_spd, errVel, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+hold on;
+semilogy(data.tspan/cspice_spd, stdVel, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+xlabel('2024-NOV-18', 'FontSize', 35);
+ylabel('Velocity Error [km]', 'FontSize', 35);
+xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
+% title('Velocity Error and $3\sigma$');
+legend('FontSize', 25, 'Location', 'northeast');
+grid on;
+set(gca, 'FontSize', 20)
+num_ticks = 5;
+tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
+tick_values = data.tspan(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(data.tspan(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+
 
 %% 4. Estimate the lunar lander coordinates:
 
@@ -203,32 +267,136 @@ for ii = 2 : length(data.tspan)
                    data.tspan(ii-1), data.tspan(ii), [realMeasurements.position(ii, :), realMeasurements.range(ii)], data, settings, constants);
 end
 
-
+% Compute lander latitude and longitude from kernels:
 stateLander = cspice_spkezr(lander.name, data.tspan, 'IAU_MOON', 'NONE', 'MOON');
 [alt, real_lon, real_lat] = cspice_reclat(stateLander(1:3, :));
 
-
-%% Plots: 
+%% Store results at final time:
+results.ex4.mean = augMean_mat(:, end);
+results.ex4.cov = augCov_mat(:, :, end);
+ 
+% Errors:
+errPos = zeros(1,length(data.tspan));
+errVel = zeros(1,length(data.tspan));
+stdPos = zeros(1,length(data.tspan));
+stdVel = zeros(1,length(data.tspan));
+errLat = zeros(1, length(data.tspan));
+errLon = zeros(1, length(data.tspan));
+stdLat = zeros(1, length(data.tspan));
+stdLon = zeros(1, length(data.tspan));
 for i = 1:length(data.tspan)
-    errPos2(i) = sqrt((xx(i,1) - augMean_mat(1,i))^2 + (xx(i,2) - augMean_mat(2,i))^2 +(xx(i,3) - augMean_mat(3,i))^2 );
-    errVel2(i) = sqrt((xx(i,4) - augMean_mat(4,i))^2 + (xx(i,5) - augMean_mat(5,i))^2 +(xx(i,6) - augMean_mat(6,i))^2 );
-    errLat(i) = sqrt((real_lat(i) - augMean_mat(7, i))^2) * cspice_dpr;
-    errLon(i) = sqrt((real_lon(i) - augMean_mat(8, i))^2) * cspice_dpr;
-    stdPos2(i) = 3 * sqrt(trace(augCov_mat(1:3,1:3, i)));
-    stdVel2(i) = 3 * sqrt(trace(augCov_mat(4:6,4:6, i)));
+    errPos(i) = sqrt((xx(i,1) - mean_mat(1,i))^2 + (xx(i,2) - mean_mat(2,i))^2 +(xx(i,3) - mean_mat(3,i))^2);
+    errVel(i) = sqrt((xx(i,4) - mean_mat(4,i))^2 + (xx(i,5) - mean_mat(5,i))^2 +(xx(i,6) - mean_mat(6,i))^2 );
+    stdPos(i) = 3 * sqrt(trace(cov_mat(1:3,1:3, i)));
+    stdVel(i) = 3 * sqrt(trace(cov_mat(4:6,4:6, i)));
     stdLat(i) = 3 * sqrt(augCov_mat(7,7,i)) * cspice_dpr;
     stdLon(i) = 3 * sqrt(augCov_mat(8,8,i)) * cspice_dpr;
+    errLat(i) = abs(real_lat(i)*cspice_dpr - augMean_mat(7,i)*cspice_dpr);
+    errLon(i) = abs(real_lon(i)*cspice_dpr - augMean_mat(8,i)*cspice_dpr);
 end
 
-figure
-plot(data.tspan, errLat)
-hold on
-plot(data.tspan, stdLat)
+% Plot errors:
 
-figure
-plot(data.tspan, errLon)
-hold on
-plot(data.tspan, stdLon)
+% Position & Velocity:
+figure()
+subplot(1, 2, 1); 
+semilogy(data.tspan/cspice_spd, errPos, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+hold on;
+semilogy(data.tspan/cspice_spd, stdPos, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+xlabel('2024-NOV-18', 'FontSize', 40);
+ylabel('Position Error [km]', 'FontSize', 40);
+xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
+% title('Position Error and $3\sigma$');
+legend('FontSize', 25, 'Location', 'northeast');
+grid on;
+set(gca, 'FontSize', 20)
+num_ticks = 5;
+tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
+tick_values = data.tspan(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(data.tspan(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+% Subplot 2: Velocity Error
+subplot(1, 2, 2);
+semilogy(data.tspan/cspice_spd, errVel, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+hold on;
+semilogy(data.tspan/cspice_spd, stdVel, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+xlabel('2024-NOV-18', 'FontSize', 35);
+ylabel('Velocity Error [km]', 'FontSize', 35);
+xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
+% title('Velocity Error and $3\sigma$');
+legend('FontSize', 25, 'Location', 'northeast');
+grid on;
+set(gca, 'FontSize', 20)
+num_ticks = 5;
+tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
+tick_values = data.tspan(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(data.tspan(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+
+%%
+
+% Latitude and Longitude:
+% Plot errors:
+figure()
+subplot(1, 2, 1); 
+plot(data.tspan/cspice_spd, errLat, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+hold on;
+plot(data.tspan/cspice_spd, stdLat, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+xlabel('2024-NOV-18', 'FontSize', 40);
+ylabel('Latitude Error [deg]', 'FontSize', 40);
+xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
+% title('Latitude Error and $3\sigma$');
+legend('FontSize', 25, 'Location', 'northeast');
+grid on;
+set(gca, 'FontSize', 20)
+num_ticks = 5;
+tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
+tick_values = data.tspan(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(data.tspan(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+
+% Subplot 2: Longitude Error
+subplot(1, 2, 2);
+plot(data.tspan/cspice_spd, errLon, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+hold on;
+plot(data.tspan/cspice_spd, stdLon, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+xlabel('2024-NOV-18', 'FontSize', 35);
+ylabel('Longitude Error [deg]', 'FontSize', 35);
+xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
+% title('Longitude Error and $3\sigma$');
+legend('FontSize', 25, 'Location', 'northeast');
+grid on;
+set(gca, 'FontSize', 20)
+num_ticks = 5;
+tick_indices = round(linspace(1, length(data.tspan), num_ticks)); 
+tick_values = data.tspan(tick_indices) / cspice_spd();
+tick_labels = cell(num_ticks, 1); 
+for i = 1:num_ticks
+    utc_full = cspice_et2utc(data.tspan(tick_indices(i)), 'C', 0); 
+    tick_labels{i} = utc_full(12:end); 
+end
+xticks(tick_values);
+xticklabels(tick_labels);
+xtickangle(0);
+
 %% Functions:
 
 function [data, constants, settings] = loadSet()
