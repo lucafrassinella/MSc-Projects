@@ -12,7 +12,6 @@ format long
 plotSettings;
 addpath('.\kernels\')
 cspice_furnsh('assignment02.tm')
-%%
 
 % Load parameters (mu, DU, TU, VU):
 parameters = loadConstants();
@@ -37,7 +36,7 @@ parameters.ut.beta = 2;
 % Number of time-grid iterations:
 N = 5;
 
-%% Pt. 1: LinCov and UT:
+%% Pt. 1: LinCov and UT
 % Initialize means and covariances for LinCov:
 lin.states = [[r0; v0; phi0], zeros(20, N)];
 lin.x0 = [r0; v0];
