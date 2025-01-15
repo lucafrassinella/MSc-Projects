@@ -666,17 +666,19 @@ function grad = objectiveJacobian(tfinal, statefinal, STM, data)
 % function of the zero-finding problem
 %
 % Inputs:
-%   - tfinal: final time [1, 1] 
-%   - stateFinal: final state at final time [14, 1]
-%   - STM: state transition matrix at final time [14, 14]
+%   - tfinel: final time  
+%   - guess: Initial guess for lambda0 and tf [8, 1]
 %   - data - structure containing data of the problem:
 %               - data.mu: adimensionalized gravitational parameter
 %               - data.g0: adimensionalized gravity acceleration
 %               - data.Isp: adimensionalized specific impulse
 %               - data.Tmax: adimensionalized maximum thrust level
 %               - data.rho0: adimensionalied reference radius
+%   - xf: target final state [6, 1]
+%   - settings: structure containing settings for ode solver (settings.odeOpt)
 %
 % Outputs:
+%   - residuals: vector of function residuals [8, 1]
 %   - grad: matrix of gradients of objective function [8, 8]
 % ----------------------------------------------------------------------- %
 
