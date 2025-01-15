@@ -465,8 +465,7 @@ XX(:, 3) = (xx(:, 3) - xx(:, 2)) .* cos(tt) - (xx(:, 4) + xx(:, 1) + mu) .* sin(
 XX(:, 4) = (xx(:, 3) - xx(:, 2)) .* sin(tt) + (xx(:, 4) + xx(:, 1) + mu) .* cos(tt); 
 
 end
-% IN TEORIA BASTA AGGIUNGERE stm COME VARIABILE A TUTTE LE FUNZIONI E UNIRE
-% IL CASO CON E IL CASO SENZA GRADIENTI
+
 function [c, ceq] = constraints(vars, data, constants) 
     % constraints Defines the equality and inequality constraints for an
     % optimization problem in the Circular Restricted 4-Body Problem (CR4BP).

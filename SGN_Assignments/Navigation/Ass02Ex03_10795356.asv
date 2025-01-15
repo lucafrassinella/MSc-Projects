@@ -7,7 +7,7 @@
 
 clearvars; close all; clc;
 cspice_kclear()
-rng default
+
 plotSettings;
 addpath('.\kernels\')
 addpath('.\sgp4\')
@@ -182,7 +182,7 @@ for ii = 2 : length(data.tspan)
 end
 
 %% Store results at final time:
-results.ex3.mean = mean_mat(end, :);
+results.ex3.mean = mean_mat(:, end);
 results.ex3.cov = cov_mat(:, :, end);
 
 % Errors:
@@ -272,7 +272,7 @@ stateLander = cspice_spkezr(lander.name, data.tspan, 'IAU_MOON', 'NONE', 'MOON')
 [alt, real_lon, real_lat] = cspice_reclat(stateLander(1:3, :));
 
 %% Store results at final time:
-results.ex4.mean = augMean_mat(end, :);
+results.ex4.mean = augMean_mat(:, end);
 results.ex4.cov = augCov_mat(:, :, end);
  
 % Errors:
@@ -345,18 +345,15 @@ xticks(tick_values);
 xticklabels(tick_labels);
 xtickangle(0);
 
-%% PLOT2PDF:
-
-
 %%
 
 % Latitude and Longitude:
 % Plot errors:
 figure()
 subplot(1, 2, 1); 
-semilogy(data.tspan/cspice_spd, errLat, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+plot(data.tspan/cspice_spd, errLat, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
 hold on;
-semilogy(data.tspan/cspice_spd, stdLat, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+plot(data.tspan/cspice_spd, stdLat, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
 xlabel('2024-NOV-18', 'FontSize', 40);
 ylabel('Latitude Error [deg]', 'FontSize', 40);
 xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
@@ -378,9 +375,9 @@ xtickangle(0);
 
 % Subplot 2: Longitude Error
 subplot(1, 2, 2);
-semilogy(data.tspan/cspice_spd, errLon, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
+plot(data.tspan/cspice_spd, errLon, 'k-', 'LineWidth', 1.8, 'DisplayName', 'Error'); 
 hold on;
-semilogy(data.tspan/cspice_spd, stdLon, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
+plot(data.tspan/cspice_spd, stdLon, 'r--', 'LineWidth', 1.5, 'DisplayName', '3$\sigma$');
 xlabel('2024-NOV-18', 'FontSize', 35);
 ylabel('Longitude Error [deg]', 'FontSize', 35);
 xlim([data.tspan(1)/cspice_spd, data.tspan(end)/cspice_spd])
@@ -403,6 +400,14 @@ xtickangle(0);
 %% Functions:
 
 function [data, constants, settings] = loadSet()
+% -------------------------------------------------------------------------
+% loadSet - function to load constants, data and settings
+%
+%   Output:
+%       - constants: struct containing constants
+%       - data: struct containing data
+%       - settings: struct containing settings
+% -------------------------------------------------------------------------
 
 settings.arcsec2rad = pi/(180*3600);
 settings.typerun    = 'u';  % user-provided inputs to SGP4 Matlab function
@@ -577,6 +582,25 @@ visibleCoords.elevation = localCoords.elevation(visibilityCond);
 end
 
 function [mean, cov] = UKF(mean, cov, ti, tf, measurements, data, settings, constants)
+% -------------------------------------------------------------------------
+% UKF - function to estimate mean and covariance at time k given data at
+% time k-1 using an Unscented Kalman Filter
+%
+%   Inputs:
+%       - mean: mean state at time step k-1 [n, 1]
+%       - cov: covariance at time step k-1  [n, n]
+%       - ti: previous time t_{k-1}
+%       - tf: actual time t_k
+%       - measurements: vector of measurements at time k (position or
+%       position and range)
+%       - data: struct containing data of the problem
+%       - settings: struct containing settings of the problem
+%       - constants: struct containing constants of the problem
+%
+%   Output:
+%       - mean: mean state at time step k [n, 1]
+%       - cov: covariance at time step k  [n, n]
+% -------------------------------------------------------------------------
 
 alpha = data.ut.alpha;
 beta = data.ut.beta;
@@ -725,6 +749,18 @@ end
 end
 
 function range = computeRange(xx, et, lander)
+% -------------------------------------------------------------------------
+% computeRange - function to compute range given a state and epoch
+%
+%   Inputs:
+%       - xx: actual state 
+%       - et: actual epoch time
+%       - lander: struct containing data of the lander
+%
+%   Output:
+%       - range: relative range between orbiter and lander
+% -------------------------------------------------------------------------
+
 
 lander_pos = cspice_latrec(lander.r, lander.lon * cspice_rpd, lander.lat * cspice_rpd);
 lander_vel = [0; 0; 0];
@@ -773,6 +809,8 @@ set(0, 'defaultAxesFontSize', 20);
 end
 
 function plotVisEl(data, orbiter_lc)
+
+
 % Convert epoch times (data.tspan) into time strings (hh:mm:ss)
 time_labels = cell(length(data.tspan), 1); 
 for i = 1:length(data.tspan)
