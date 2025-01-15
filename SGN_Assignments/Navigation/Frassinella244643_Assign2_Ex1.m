@@ -167,6 +167,25 @@ end
 %% Functions
 
 function [dxdt] = PBRFBP(t, xx, parameters)
+% ----------------------------------------------------------------------- %
+% PBRFBP - Function to compute the RHS of the equations of motion for the 
+% Planar Bicircular Restricted Four-Body Problem (PBRFBP).
+%
+% Inputs:
+%   - t: Current time [1, 1]
+%   - xx: Current state vector:
+%               - [4,1] 
+%   - parameters - structure containing constants of the problem:
+%               - parameters.mu: Mass ratio between the two primary bodies,
+%               - parameters.ms: Mass of the smaller third body (e.g., a spacecraft),
+%               - parameters.rho: Distance parameter,
+%               - parameters.om_s: Angular velocity of the smaller third body
+%
+% Outputs:
+%   dxdt      - Derivative of the state vector  [4, 1]
+% ----------------------------------------------------------------------- %  
+
+% Extract variables:
 x = xx(1);
 y = xx(2);
 vx = xx(3);
@@ -178,6 +197,7 @@ ms = parameters.constants.ms;
 rho = parameters.constants.rho;
 om_s = parameters.constants.om_s;
 
+% Derivative of scalar potential:
 dOMdx = x - (ms*cos(om_s*t))/rho^2 - (mu*(mu + x - 1))/((mu + x - 1)^2 + y^2)^(3/2) + ((2*mu + 2*x)*(mu - 1))/(2*((mu + x)^2 + y^2)^(3/2)) - (ms*(2*x - 2*rho*cos(om_s*t)))/(2*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2));
 dOMdy = y - (ms*sin(om_s*t))/rho^2 - (mu*y)/((mu + x - 1)^2 + y^2)^(3/2) - (ms*(2*y - 2*rho*sin(om_s*t)))/(2*((x - rho*cos(om_s*t))^2 + (y - rho*sin(om_s*t))^2)^(3/2)) + (y*(mu - 1))/((mu + x)^2 + y^2)^(3/2);
 

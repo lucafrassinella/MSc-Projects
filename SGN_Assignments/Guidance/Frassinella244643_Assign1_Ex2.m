@@ -252,7 +252,7 @@ results.ex3.vars_opt = vars_opt_ms;
 results.ex3.dv_opt = dv_opt_ms;
 results.ex3.errPos = errDim(1);
 results.ex3.errVel = errDim(2);
-%%
+
 % Plots:
 plotMultipleShooting(vars_opt_ms, N, constants, data)
 
