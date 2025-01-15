@@ -174,9 +174,8 @@ function [dxdt] = PBRFBP(t, xx, parameters)
 %
 % Inputs:
 %   - t: Current time [1, 1]
-%   - xx: Current state vector (with or without appended STM):
-%               - [4,1] if without STM
-%               - [20, 1] if with STM
+%   - xx: Current state vector (with or withou:
+%               - [4,1] 
 %   - parameters - structure containing constants of the problem:
 %               - parameters.mu: Mass ratio between the two primary bodies,
 %               - parameters.ms: Mass of the smaller third body (e.g., a spacecraft),
@@ -205,8 +204,6 @@ dOMdy = y - (ms*sin(om_s*t))/rho^2 - (mu*y)/((mu + x - 1)^2 + y^2)^(3/2) - (ms*(
 
 
 if length(xx) == 20
-    % If STM is appended, compute also the derivative of STM with
-    % variational approach:
     dxdt = zeros(20, 1);
     phi = reshape(xx(5:end), 4, 4);
     A = zeros(4, 4);
@@ -221,7 +218,6 @@ if length(xx) == 20
     dphi = A*phi;
     dxdt(5:end) = reshape(dphi, 16, 1);
 else
-    % If STM not appended, compute derivative only of the state:
     dxdt = zeros(4, 1);
     dxdt(1:2) = xx(3:4);
     dxdt(3) = 2*vy + dOMdx;
