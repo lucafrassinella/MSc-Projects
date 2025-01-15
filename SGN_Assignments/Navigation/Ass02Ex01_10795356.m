@@ -411,9 +411,6 @@ function plotSettings
 %-------------------------------------------------------------------------%
 % Settings for figure plots
 %-------------------------------------------------------------------------%
-set(groot, 'defaultFigurePosition', [470, 360, 900, 530]-100)
-set(groot, 'defaultFigureColor', [1; 1; 1]);
-set(groot, 'defaultAxesColor', 'auto');
 % Setting Lines:
 set(0, 'defaultLineLineWidth', 1.6);
 set(0,'defaultLineMarkerSize', 4) ;
