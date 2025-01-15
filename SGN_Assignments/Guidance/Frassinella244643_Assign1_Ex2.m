@@ -44,12 +44,12 @@ axis equal
 [xPark_f, yPark_f] = circularOrbit(rf, [1-mu; 0]);  % final parking orbit
 plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking orbit') 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
-xlabel('x [-]', 'FontSize', 35)
-ylabel('y [-]', 'FontSize', 35)
+xlabel('x [-]', 'FontSize', 20)
+ylabel('y [-]', 'FontSize', 20)
 title('Trajectory from initial guess', 'FontWeight', 'bold')
 subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
 xlim([-1.5 3])
-legend('FontSize', 25);
+legend('FontSize', 18);
 
 % Rotate to ECI and Plot initial guess solution:
 XX = rot2ECI(tt, xx, constants);
@@ -66,10 +66,10 @@ grid on
 axis equal
 xlabel('x [-]')
 ylabel('y [-]')
-title('Trajectory from initial guess', 'FontWeight', 'bold')
-subtitle('[@Earth ECI]', 'FontSize', 18)
+% title('Trajectory from initial guess', 'FontWeight', 'bold')
+% subtitle('[@Earth ECI]', 'FontSize', 18)
 xlim([-1.25 2.5])
-legend('FontSize', 25);
+legend('FontSize', 18);
 
 %% Pt. 2: Simple Shooting Optimization:
 
@@ -115,12 +115,14 @@ axis equal
 [xPark_f, yPark_f] = circularOrbit(rf, [1-mu; 0]);  % final parking orbit
 plot(xPark_i, yPark_i, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking orbit') 
 plot(xPark_f, yPark_f, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Final parking orbit')
-xlabel('x [-]')
-ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
-subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
-xlim([-1.5 2.25])
-legend('FontSize', 25);
+% title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
+% subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
+xlim([-1.3 1.45])
+ylim([-0.1 1.7])
+xlabel('x [-]', 'FontSize', 23)
+ylabel('y [-]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
 figure()
 plot(XX(:, 1), XX(:, 2), 'k', 'DisplayName', 'Trajectory')
@@ -131,14 +133,16 @@ plot(xParkECI, yParkECI, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parkin
 plot(xMoon, yMoon, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Moon orbit') 
 grid on
 axis equal
-xlabel('x [-]')
-ylabel('y [-]')
-title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
-subtitle('[@Earth ECI]', 'FontSize', 18)
-xlim([-1.25 2.5])
-legend('FontSize', 25);
+% title('Simple Shooting Optimized Trajectory (w/o gradients)', 'FontWeight', 'bold')
+% subtitle('[@Earth ECI]', 'FontSize', 18)
+xlim([-1.7 1.72])
+ylim([-1.2 1.22])
+xlabel('x [-]', 'FontSize', 23)
+ylabel('y [-]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
-
+%%
 %%%% b) Simple Shooting with analytical derivatives of the
 %%%% objective/constraints:
 
@@ -184,8 +188,12 @@ xlabel('x [-]')
 ylabel('y [-]')
 % title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
 % subtitle('[@EMB Earth-Moon Rotating Frame]', 'FontSize', 18)
-xlim([-1.5 2.25])
-legend('FontSize', 25);
+xlim([-1.3 1.45])
+ylim([-0.1 1.7])
+xlabel('x [-]', 'FontSize', 23)
+ylabel('y [-]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
 figure()
 plot(XX_ss(:, 1), XX_ss(:, 2), 'k', 'DisplayName', 'Trajectory')
@@ -196,12 +204,14 @@ plot(xParkECI, yParkECI, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parkin
 plot(xMoon, yMoon, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Moon orbit') 
 grid on
 axis equal
-xlabel('x [-]')
-ylabel('y [-]')
 % title('Simple Shooting Optimized Trajectory (with gradients)', 'FontWeight', 'bold')
 % subtitle('[@Earth ECI]', 'FontSize', 18)
-xlim([-1.25 2.5])
-legend('FontSize', 25);
+xlim([-1.7 1.72])
+ylim([-1.2 1.22])
+xlabel('x [-]', 'FontSize', 23)
+ylabel('y [-]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
 %% Pt.3: Multiple Shooting Optimization:
 
@@ -242,7 +252,7 @@ results.ex3.vars_opt = vars_opt_ms;
 results.ex3.dv_opt = dv_opt_ms;
 results.ex3.errPos = errDim(1);
 results.ex3.errVel = errDim(2);
-
+%%
 % Plots:
 plotMultipleShooting(vars_opt_ms, N, constants, data)
 
@@ -312,15 +322,17 @@ plot(XX_ss(:, 1)*constants.DU, XX_ss(:, 2)*constants.DU, 'k')
 [xMoon, yMoon] = circularOrbit(1, [0; 0]);
 plot(xParkECI*constants.DU, yParkECI*constants.DU, '--k', 'LineWidth', 0.8, 'DisplayName', 'Initial parking orbit')
 plot(xMoon*constants.DU, yMoon*constants.DU, '--', 'Color', [0.6 0.6 0.6], 'LineWidth', 0.6, 'DisplayName', 'Moon orbit') 
-xlabel('x [km]')
-ylabel('y [km]')
-legend('N-Body Propagated Orbit', 'Simple Shooting With Gradients', 'Initial Parking Orbit', 'Moon Orbit', 'FontSize', 25)
-title('Comparison Between N-Body and PBRFBP Propagations')
-subtitle('(@Earth ECI)')
+legend('N-Body', 'PBRFBP', 'Initial Orbit', 'Moon Orbit')
+% title('Comparison Between N-Body and PBRFBP Propagations')
+% subtitle('(@Earth ECI)')
 grid on
 axis equal
-ylim([-6e05 8.5e05])
-xlim([-7e05 7e05])
+xlim([-1.7*constants.DU 1.72*constants.DU])
+ylim([-1.2*constants.DU 1.22*constants.DU])
+xlabel('x [km]', 'FontSize', 23)
+ylabel('y [km]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
 toc
 
@@ -1268,13 +1280,15 @@ for j = 1:floor((length(vars_opt_ms)) / 4) - 1
     plot(vars_opt_ms(4 * j + 1), vars_opt_ms(4 * j + 2), 'Marker', 'o', 'MarkerSize', 7, 'LineWidth', 2);
 end
 plot(vars_opt_ms(1), vars_opt_ms(2), 'Marker', 'o', 'MarkerSize', 7, 'LineWidth', 2);
-xlabel('x [DU]');
-ylabel('y [DU]');
-title('Optimal Trajectory (@EMB Earth-Moon Rotating Frame)');
-legend('Transfer Orbit', 'Parking Orbit', 'Target Orbit', 'Nodes');
+% title('Optimal Trajectory (@EMB Earth-Moon Rotating Frame)');
+legend('Transfer Orbit', 'Parking Orbit', 'Target Orbit', 'Nodes', 'FontSize', 15);
 axis equal;
-xlim([-1.5 2.5])
-ylim([-0.25 1.75])
+xlim([-1.3 1.45])
+ylim([-0.1 1.7])
+xlabel('x [-]', 'FontSize', 23)
+ylabel('y [-]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
 % Rotate to ECI:
 xx_ms = xx_ms(:,1:4);
@@ -1294,11 +1308,15 @@ for i = 1:N - 1
     plot(optStateEciMS(:, 1), optStateEciMS(:, 2), 'k');
     plot(optStateEciMS(1, 1), optStateEciMS(1, 2), 'o');
 end
-xlabel('x [DU]');
-ylabel('y [DU]');
-title('Optimal Trajectory (@Earth ECI)');
-legend('Transfer Orbit', 'Parking Orbit', 'Moon Orbit', '', '', '', 'Nodes');
+% title('Optimal Trajectory (@Earth ECI)');
+legend('Transfer Orbit', 'Parking Orbit', 'Moon Orbit', '', '', '', 'Nodes', 'FontSize', 15);
 axis equal;
+xlim([-1.7 1.72])
+ylim([-1.2 1.22])
+xlabel('x [-]', 'FontSize', 23)
+ylabel('y [-]', 'FontSize', 23)
+set(gca, 'FontSize', 16)
+legend('FontSize', 18);
 
 end
 
