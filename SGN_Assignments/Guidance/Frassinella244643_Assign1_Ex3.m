@@ -242,7 +242,6 @@ for i = 1 : length(tt)
     H(i) = q_i + dot(ll_i, fi);
 end
 
-%%
 % Plot time evolution of the Hamiltonian:
 figure()
 plot(tt, H, 'k')
@@ -252,6 +251,30 @@ xlim([tt(1) tt(end)])
 grid on
 title('Hamiltonian Time Evolution')
 subtitle('$T_{max}$=2.860 N')
+
+% Primer vector components evolution in the NTW ref. frame:
+alpha = - xx(:, 11:13)' ./ vecnorm(xx(:, 11:13)');
+% Rotate to NTW frame:
+alphaNTW = zeros(3, length(alpha));
+for i = 1 : length(alpha)
+    xxECI = xx(i, 1:6);
+    alphaECI = alpha(:, i);
+    alphaNTW(:, i) = rot2NTW(xxECI, alphaECI);
+end
+normAlpha = vecnorm(alphaNTW);
+
+figure()
+plot(tt, alphaNTW(1, :), 'DisplayName', '$\alpha_N$')
+hold on
+plot(tt, alphaNTW(2, :), 'DisplayName', '$\alpha_T$')
+plot(tt, alphaNTW(3, :), 'DisplayName', '$\alpha_W$')
+plot(tt, normAlpha, 'DisplayName', 'norm($\alpha$)')
+xlabel('Time [-]', 'Interpreter', 'latex')
+ylabel('$\alpha$', 'Interpreter', 'latex')
+legend('Interpreter', 'latex')
+xlim([tt(1) tt(end)])
+grid on
+title('Time Evolution of $\alpha$ components in NTW frame')
 
 % Plot Trajectory:
 figure()
