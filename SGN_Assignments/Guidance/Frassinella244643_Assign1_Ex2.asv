@@ -343,7 +343,7 @@ set(gca, 'FontSize', 16)
 legend('FontSize', 18);
 
 %% Clear Workspace:
-clearvars -except data constants results
+clearvars -except data constants settings
 
 %% Functions
 
