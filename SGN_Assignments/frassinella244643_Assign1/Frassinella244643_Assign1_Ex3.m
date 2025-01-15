@@ -764,7 +764,7 @@ function plotSettings
 % Setting Lines:
 set(0, 'defaultLineLineWidth', 1.6);
 set(0,'defaultLineMarkerSize', 4) ;
-set(0,'defaultLineMarkerEdgeColor', 'k')
+set(0,'defaultLineMarkerEdgeColor', 'auto')
 set(0,'defaultLineMarkerFaceColor', 'auto')
 % Setting Interpreter:
 set(0, 'defaultTextInterpreter', 'latex')
