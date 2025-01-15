@@ -935,8 +935,7 @@ end
 
 function plotLocalCoords(lc_station, station, tspan, visibilityTimesVec, visibleAzimuth, visibleElevation)
 % -------------------------------------------------------------------- %
-% Function to plot azimuth/elevation and visibility windows
-% -------------------------------------------------------------------- %
+% Function to plot azimuth
 
 azimuth = lc_station.azimuth;
 elevation = lc_station.elevation;
