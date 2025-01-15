@@ -8,9 +8,8 @@
 clearvars; close all; clc;
 cspice_kclear()
 rng default
-format long
+format long g
 plotSettings;
-addpath('.\kernels\')
 cspice_furnsh('assignment02.tm')
 
 % Load parameters (mu, DU, TU, VU):
@@ -82,7 +81,7 @@ for i = 2 : N + 1
     [mc.x_mean(:, i), mc.P(:, :, i), finalStates] = monteCarlo(mc.x0, parameters);
 end
 
-%% Outputs:
+%% Outputs and Plots:
 
 % Plot of mean and covariance ellipses:
 mean_ut = ut.states(:, end);
@@ -120,6 +119,7 @@ for i = 2 : N+1
     eigMaxPv(i,3) = 3*sqrt(max(eig(mc.P(3:4, 3:4, i))));
 end
 
+% Position submatrix:
 figure()
 plot(tvec, eigMaxPr(:, 1), '--x', 'Color', 'r', 'MarkerEdgeColor', 'r', 'MarkerSize', 8)
 hold on
@@ -132,6 +132,7 @@ xlabel('TU [-]', 'FontSize', 35)
 ylabel('$3\sqrt{\mathrm{max}\lambda_i}P_{rr}$', 'FontSize', 35)
 legend('LinCov', 'UT', 'MC', 'FontSize', 40)
 
+% Velocity submatrix:
 figure()
 plot(tvec, eigMaxPv(:, 1), '--x', 'Color', 'r', 'MarkerEdgeColor', 'r', 'MarkerSize', 8)
 hold on
@@ -263,7 +264,7 @@ function [x_mean, P, ss_points] = UT(x0, P0, parameters)
 %       - ss_points: final propagated sigma points [n, 2n+1]
 % ----------------------------------------------------------------------- %
 
-
+% Extract parameters
 ti = parameters.ti;
 tfinal = parameters.tfinal;
 odeOptions = parameters.odeOptions;
@@ -409,9 +410,9 @@ GM_Moon = cspice_bodvrd('MOON', 'GM', 1);
 
 
 parameters.constants.mu = GM_Moon/(GM_Earth + GM_Moon); % Earth-Moon system gravity constant
-parameters.constants.ms = 3.28900541e05;       % [??]
-parameters.constants.rho = 3.88811143e02;      % [??]
-parameters.constants.om_s = -9.25195985e-01;   % [??]
+parameters.constants.ms = 3.28900541e05;       
+parameters.constants.rho = 3.88811143e02;      
+parameters.constants.om_s = -9.25195985e-01;   
 parameters.constants.TU = 4.34811305;      % [days]    Time unit
 parameters.constants.DU = 3.84405000e05;   % [km]      Distance unit
 parameters.constants.VU = 1.02454018;      % [km/s]    Velocity unit
@@ -426,7 +427,7 @@ function [dxdt] = PBRFBP_STM(t, mu, xx)
 % Inputs:
 %   - t: Current time [1, 1]
 %   - xx: Current state vector (with appended STM) [20, 1]
-%   - mu: Adimensional mass ratio between the two primary bodies,
+%   - mu: Adimensional mass ratio between the two primary bodies
 %
 % Outputs:
 %   dxdt      - Derivative of the state vector  [20, 1]
@@ -475,23 +476,29 @@ function [xxf, tf, xx, tt, PHI] = propagatorSTM(xx0, t0, tf, mu)
 % ----------------------------------------------------------------------- %
 % propagatorSTM - function to propagate PBRFBP dynamics with STM
 % computation
+%
 % Inputs:
 %       - xx0: initial state vector [4, 1]
 %       - t0: initial propagation time [1, 1]
 %       - tf: final propagation time [1, 1]
-%       - mu: 
-% Output: xx = [n, 4] (solo gli stati)
-%         xxf = 4x1     (stato finale)
-%         tf = 1x1      (tempo finale)
-%         PHI = 4x4     (STM(t0, tf))
+%       - mu: Adimensional mass ratio between the two primary bodies
+% 
+% Outputs: 
+%       - xx: matrix of propagated states [n, 4]
+%       - tt: vector of propagation times [n, 1]
+%       - xxf: state at final time [4, 1]
+%       - tf: final time [1, 1]
+%       - PHI: STM at final time [4, 4]
+% ----------------------------------------------------------------------- %
  
 PHI0 = eye(4); % STM at t0
 xx0 = [xx0; PHI0(:)]; % new vector of initial conditions (appended with STM)
 
-
+% ODE propagation:
 optset = odeset('RelTol', 1e-12, 'AbsTol', 1e-12);
 [tt, xxv] = ode78(@(t,xx) PBRFBP_STM(t, mu, xx), [t0 tf], xx0, optset);
 
+% Outputs:
 xx = xxv(:, 1:4)';
 PHI = xxv(end, 5:end);
 PHI = reshape(PHI, 4, 4);
