@@ -8,9 +8,8 @@
 clearvars; close all; clc;
 cspice_kclear()
 rng default
-format long
+format long g
 plotSettings;
-addpath('.\kernels\')
 cspice_furnsh('assignment02.tm')
 
 % Load parameters (mu, DU, TU, VU):

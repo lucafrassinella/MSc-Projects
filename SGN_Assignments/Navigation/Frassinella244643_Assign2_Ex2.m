@@ -8,11 +8,11 @@
 clearvars; close all; clc;
 cspice_kclear()
 plotSettings;
-addpath('.\kernels\')
+% addpath('.\kernels\')
 addpath('.\sgp4\')
 addpath('.\tle\')
-addpath('.\mice\src\mice')
-addpath('.\mice\lib')
+% addpath('.\mice\src\mice')
+% addpath('.\mice\lib')
 cspice_furnsh('assignment02.tm')
 
 % Initialize data:
