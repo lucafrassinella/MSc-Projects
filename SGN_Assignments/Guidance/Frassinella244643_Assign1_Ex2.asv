@@ -1131,7 +1131,7 @@ options = odeset('reltol', 1e-12, 'abstol', [1e-6*ones(1,3),1e-9*ones(1,3)]);
 end
 
 function thetaFinderFun = thetaFinder(etVec, thetaTarget, frame, center)
-% ----------------------------------------------------------------------- %
+% --------
 % thetaFinder - function to calculate the angular difference (theta) between the Sun 
 % and the Moon relative to a central body (Earth or another planet) in a 
 % specified reference frame. It then computes the difference between the 
@@ -1146,7 +1146,7 @@ function thetaFinderFun = thetaFinder(etVec, thetaTarget, frame, center)
 %
 % Outputs:
 %   thetaFinderFun - Difference between the computed theta angle and the target angle
-% ----------------------------------------------------------------------- %
+
 
 M_pos = zeros(3, length(etVec));
 S_pos = zeros(3, length(etVec));
@@ -1163,18 +1163,6 @@ thetaFinderFun = mod(thetaSun - thetaMoon, 2*pi) - thetaTarget;
 end
 
 function [x, y] = circularOrbit(radius, center)
-% ----------------------------------------------------------------------- %
-% Function to compute x,y coordinates for a circular orbit given center and
-% radius
-% 
-% Inputs:
-%   - center: center of the orbit [2, 1]
-%   - radius: radius of the orbit [1, 1]
-%
-% Outputs:
-%   - x: array of x coordinates [1000, 1]
-%   - y: array of y coordinates [1000, 1]
-% ----------------------------------------------------------------------- %
 
 % Define theta vector:
 theta = linspace(0, 2*pi, 1000); 
@@ -1213,19 +1201,6 @@ set(0, 'defaultAxesFontSize', 35);
 end
 
 function plotMultipleShooting(vars_opt_ms, N, constants, data)
-% ----------------------------------------------------------------------- %
-% Function to plot Multiple Shooting optimal trajectory in the rotating
-% frame and ECI frame
-% 
-% Inputs:
-%   - vars_opt_ms: optimal multiple shooting variables [18, 1]
-%   - N: number of nodes [1, 1]
-%   - data: struct containing data of the problem:
-%        - data.r0: Initial orbit radius
-%        - data.rf: Final orbit radius
-%   - constants.mu: Mass ratio between the two primary bodies.
-%
-% ----------------------------------------------------------------------- %
 
 mu = constants.mu;
 r0 = data.r0;
