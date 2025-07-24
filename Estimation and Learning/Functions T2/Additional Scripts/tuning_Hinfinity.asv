@@ -1,0 +1,256 @@
+% Optimize Filter:
+% Script to optimize {omega1, omega2, N} of pass-band filter for the
+% H-infinity structuring method
+
+clearvars;
+close all;
+bdclose('all');
+clc;
+format short;
+addpath('common','common/simulator-toolbox','common/simulator-toolbox/attitude_library','common/simulator-toolbox/trajectory_library');
+addpath('Functions T2\')
+addpath('Mats\')
+load ExcitationM_eq.mat
+load optimizeFilterData.mat
+
+
+%%
+% Initial model 
+%   - state: longitudinal velocity, pitch rate, pitch angle; 
+%   - input: normalised pitching moment; 
+%   - outputs: state and longitudinal acceleration;
+
+ctrl = parameters_controller();
+Ts = ctrl.sample_time;
+
+Xu = -0.1068;
+Xq = 0.1192;
+Mu = -5.9755;
+Mq = -2.6478;
+Xd = -10.1647;
+Md = 450.71;
+
+A = [Xu, Xq, -9.81; Mu, Mq, 0; 0, 1, 0];
+B = [Xd; Md; 0];
+C = [1, 0, 0; 0, 1, 0; 0, 0, 1; Xu, Xq, 0]; 
+D = [0; 0; 0; Xd];
+
+realModel.A = A;
+realModel.B = B;
+realModel.C = C;
+realModel.D = D;
+real_parameters = [Xu; Xq; Mu; Mq; Xd; Md];
+realModel.parameters = real_parameters;
+
+% Noise
+% noise.Enabler = 0;
+noise.Enabler = 1;
+noise.pos_stand_dev = noise.Enabler * 0.0011;                            	%[m]
+noise.vel_stand_dev = noise.Enabler * 0.01;                               %[m/s]
+noise.attitude_stand_dev = noise.Enabler * deg2rad(0.33);                 %[rad]
+noise.ang_rate_stand_dev = noise.Enabler * deg2rad(1);                   %[rad/s]
+
+seed.x = 1;
+seed.vx = 2;
+seed.theta = 3;
+seed.q = 4;
+
+% Delays
+delay.position_filter = 1;
+delay.attitude_filter = 1;
+delay.mixer = 1;
+
+%
+
+ExcitationM = ExcitationM_eq;
+
+% Selected interval:
+t = ExcitationM(:,1);
+simulation_time = t(end) - t(1);
+
+% Variables grids:
+om1_grid = [0.5, 1, 2, 3, 4, 5];
+om2_grid = [7, 8, 9, 10, 12, 15];
+N_grid = [4, 6, 8, 10, 12, 15];
+
+configs = [];
+for om1 = om1_grid
+    for om2 = om2_grid
+        for N = N_grid
+            configs = [configs; om1, om2, N];
+        end
+    end
+end
+
+numConfigs = size(configs, 1);
+VAF_results = zeros(numConfigs, 1);  
+theta_all   = cell(numConfigs, 1);   
+
+% Simulink model = 'Validate_Simulator_Single_Axis.slx'
+simInputs(numConfigs, 1) = Simulink.SimulationInput('Validate_Simulator_Single_Axis');
+
+parfor k = 1:numConfigs
+        % Parameters:
+        om1 = configs(k, 1);
+        om2 = configs(k, 2);
+        N   = configs(k, 3);
+
+        % Structuring:
+        [theta_hat, ~] = modelMatching(sys_hat_CT, om1, om2, N);
+
+        g = 9.81;
+        A_est = [theta_hat(1), theta_hat(2), -g;
+                          theta_hat(3), theta_hat(4),  0;
+                          0,            1,             0];
+        B_est = [theta_hat(5); theta_hat(6); 0];
+        C_est = [1 0 0; 0 1 0; 0 0 1; theta_hat(1), theta_hat(2), 0];
+        D_est = [0; 0; 0; theta_hat(3)];
+        parameters = theta_hat;
+
+        % Prepare inputs for Simulink Model:
+        simIn = Simulink.SimulationInput('Validate_Simulator_Single_Axis');
+        simIn = simIn.setVariable('A_est', A_est);
+        simIn = simIn.setVariable('B_est', B_est);
+        simIn = simIn.setVariable('C_est', C_est);
+        simIn = simIn.setVariable('D_est', D_est);
+        simIn = simIn.setVariable('ctrl', ctrl);
+        simIn = simIn.setVariable('simulation_time', simulation_time);
+        simIn = simIn.setVariable('ExcitationM', ExcitationM);
+        simIn = simIn.setVariable('delay', delay);
+        simIn = simIn.setVariable('noise', noise);
+ 
+        simInputs(k) = simIn;
+
+simInputs(k) = simIn;
+end
+
+% Batch Simulation:
+simulationResults = parsim(simInputs, 'ShowProgress', 'on');
+
+% Extract VAF for each simulation:
+for k = 1:numConfigs
+        % Only last part of the dataset:
+        q_real = simulation.q(19000:end);               
+        q_est  = simulationResults(k).q(19000:end);     
+        VAF_results(k) = vaf(q_real, q_est);
+end
+
+
+% Best Configuration:
+[maxVAF, idx_best] = max(VAF_results);
+best_config = configs(idx_best, :);
+fprintf('\nBest config: om1 = %.1f, om2 = %.1f, N = %d --> VAF = %.2f%%\n', ...
+         best_config(1), best_config(2), best_config(3), maxVAF);
+
+N_opt = best_config(3);
+
+%% Refine search fixing N to the previously found optimum:
+N_fixed = N_opt;  
+
+% Larger searc
+om1_range = linspace(0.5, 5, 30);      % asse X
+om2_range = linspace(7, 15, 30);       % asse Y
+
+% Costruisci configurazioni valide (om2 > om1)
+configs = [];
+for i = 1:length(om1_range)
+    for j = 1:length(om2_range)
+        if om2_range(j) > om1_range(i)
+            configs = [configs; om1_range(i), om2_range(j)];
+        end
+    end
+end
+
+numConfigs = size(configs, 1);
+VAF_results = nan(numConfigs, 1);
+%%
+simInputs(numConfigs, 1) = Simulink.SimulationInput('Validate_Simulator_Single_Axis');
+
+% === Stima + preparazione simulazioni
+parfor k = 1:numConfigs
+    try
+        om1 = configs(k, 1);
+        om2 = configs(k, 2);
+        N   = N_fixed;
+
+        [~, ~, ~, ~, theta_hat, ~] = structuring_hinfstruct_systune_pre(sys_hat_CT, om1, om2, N);
+
+        g = 9.81;
+        A_est = [theta_hat(1), theta_hat(2), -g;
+                 theta_hat(3), theta_hat(4),  0;
+                 0,            1,             0];
+        B_est = [theta_hat(5); theta_hat(6); 0];
+        C_est = [1 0 0; 0 1 0; 0 0 1; theta_hat(1), theta_hat(2), 0];
+        D_est = [0; 0; 0; theta_hat(3)];
+
+        % Passaggio matrici al simulink
+        simIn = Simulink.SimulationInput('Validate_Simulator_Single_Axis');
+        simIn = simIn.setVariable('A_est', A_est);
+        simIn = simIn.setVariable('B_est', B_est);
+        simIn = simIn.setVariable('C_est', C_est);
+        simIn = simIn.setVariable('D_est', D_est);
+         simIn = simIn.setVariable('ctrl', ctrl);
+         simIn = simIn.setVariable('simulation_time', simulation_time);
+         simIn = simIn.setVariable('ExcitationM', ExcitationM);
+         simIn = simIn.setVariable('delay', delay);
+         simIn = simIn.setVariable('noise', noise);
+ 
+         simInputs(k) = simIn;
+
+simInputs(k) = simIn;
+
+    catch
+        VAF_results(k) = NaN;
+        continue;
+    end
+end
+
+% === Simulazione batch
+simulationResults = parsim(simInputs, 'ShowProgress', 'on');
+
+% === Calcolo VAF
+for k = 1:numConfigs
+        q_real = simulation.q(19000:end);               % da workspace base
+        q_est  = simulationResults(k).q(19000:end);      % dalla simulazione
+        VAF_results(k) = vaf(q_real, q_est);
+end
+
+%% === Ricostruzione matrice 2D (om2 su righe, om1 su colonne)
+numConfigs = size(configs, 1);
+X = length(om1_range); Y = length(om2_range);
+VAFmap = nan(Y, X);  % om2 = righe, om1 = colonne
+
+for k = 1:numConfigs
+    om1 = configs(k,1);
+    om2 = configs(k,2);
+
+    idx_x = find(om1_range == om1);
+    idx_y = find(om2_range == om2);
+    VAFmap(idx_y, idx_x) = VAF_results(k);
+end
+
+% === Trova configurazione ottima
+[maxVAF, idx_best] = max(VAF_results);
+om1_best = configs(idx_best,1);
+om2_best = configs(idx_best,2);
+
+% === Plot Colormap (seguendo tuo stile)
+[OM1_grid, OM2_grid] = meshgrid(om1_range, om2_range);
+
+figure();
+h = pcolor(OM1_grid, OM2_grid, VAFmap, 'HandleVisibility', 'off');
+set(h, 'EdgeColor', 'none');
+set(gca, 'YDir', 'normal');
+colormap('parula');
+
+% Trasparenza per NaN
+alpha_data = ~isnan(VAFmap);
+set(h, 'AlphaData', alpha_data);
+
+% Colorbar e labels
+c = colorbar;
+ylabel(c, 'VAF [\%]', 'Interpreter', 'latex', 'FontSize', 18);
+xlabel('Lower cutoff frequency $\omega_1$ [rad/s]', 'Interpreter', 'latex', 'FontSize', 18);
+ylabel('Upper cutoff frequency $\omega_2$ [rad/s]', 'Interpreter', 'latex', 'FontSize', 18);
+title('PBSID$_\infty$ + structuring: time-domain VAF vs $(\omega_1,\omega_2)$', ...
+       'Interpreter', 'latex', 'FontSize', 22);

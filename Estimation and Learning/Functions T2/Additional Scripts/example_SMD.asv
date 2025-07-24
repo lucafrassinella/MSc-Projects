@@ -1,0 +1,222 @@
+clear;
+close all;
+clc;
+
+
+%% Test Case: System of two masses connected by springs and dampers
+
+% Define parameters:
+m1 = 20; m2 = 20; k1 = 1000; k2 = 2000; d1 = 1; d2 = 5;
+
+% Define time parameters:
+time_steps = 300;
+t_sample = 0.05;
+Ts = 0.05; 
+% Define number of inputs and outputs (r, m)
+r = 1; m = 1;
+
+% Define continuous-time system
+Ac = [0, 1, 0, 0; 
+      -(k1+k2)/m1, -(d1+d2)/m1, k2/m1, d2/m1;
+      0, 0, 0, 1;
+      k2/m2, d2/m2, -k2/m2, -d2/m2];
+Bc = [0; 0; 0; 1/m2];
+Cc = [1, 0, 0, 0];
+Dc = 0;
+
+% Discrete-time system (Backward Euler discretization)
+I = eye(size(Ac));
+A = inv(I - t_sample * Ac);       % backward Euler A
+B = A * t_sample * Bc;            % backward Euler B
+C = Cc;
+D = 0;
+
+
+% Input & Initial state (for identification):
+rng(42)
+x0_id = randn(4,1);
+u_id = randn(1, time_steps);
+
+% Input & Initial state (for validation):
+rng(99)
+x0_val = randn(4,1);
+u_val = randn(1, time_steps);
+
+% Simulate discrete-time systems to obtain input-output data for
+% identification and validation
+
+[Y_id, X_id] = simulate(A,B,C, u_id, x0_id);
+[Y_val, X_val] = simulate(A,B,C, u_val, x0_val);
+
+% Plot:
+figure()
+plot(u_id)
+title('Input sequence (identification)')
+
+figure()
+plot(Y_id)
+title('true output (identification)')
+
+%% PBSIDopt for system identification
+clc;
+
+p = 24;
+f = 20;
+n = 4; % Pre-estimated model order
+
+% [M_pm, Z_0_pm_l, Y_p_p_l] = estimateMarkovParameters(u_id,Y_id,p);
+% 
+% % Step 2:
+% [A_id, Acl_id, B_id, C_id, K_id, S_sv, X_p_p_l] = estimateModel(u_id, Y_id, M_pm, Z_0_pm_l, p, f, n_hat);
+% D_id = 0;
+% 
+% 
+% % PBSID-varx (open loop)
+% [S,X] = dordvarx(u_id,Y_id,f,p,'tikh','gcv');
+% figure, semilogy(S,'*');
+% x = dmodx(X,n_hat);
+% [Ai,Bi,Ci,Di,Ki] = dx2abcdk(x,u_id,Y_id,f,p);
+
+[Ai, Bi, Ci, Di, Ki, S, X] = PBSID(u_id, y_id, p, f, n);
+
+figure;
+semilogy(S, 'o');
+
+
+%% Validation:
+
+h = 10;  % window size to estimate initial state
+
+% Estimate the initial state for the validation set
+x0_est = estimateInitial(Ai, Bi, Ci, u_val, Y_val, h);
+
+% Simulate the open-loop model
+[Y_val_prediction, ~] = simulate(Ai, Bi, Ci, u_val, x0_est);
+
+% Compute validation metrics
+[rel_err, VAF, Akaike] = modelError(Y_val, Y_val_prediction, r, m, 30);
+fprintf('Final model relative error: %.2f%%\nVAF value: %.2f%%\nAkaike: %.2f\n', rel_err, VAF, Akaike);
+
+
+% Plot: real vs predicted output (first 100 samples)
+figure;
+plot(1:100, Y_val(1,1:100), 'k', 'DisplayName', 'Real output'); hold on;
+plot(1:100, Y_val_prediction(1,1:100), 'r--', 'DisplayName', 'Prediction');
+legend;
+xlabel('Time steps');
+ylabel('Predicted and real outputs');
+title('Model Validation');
+grid on;
+
+%% Check eigs:
+
+eig_est = eig(Ai);
+eig_true = eig(A);
+
+figure;
+plot(real(eig_true), imag(eig_true), 'bo', 'MarkerSize', 10, 'LineWidth', 2); hold on;
+plot(real(eig_est), imag(eig_est), 'rx', 'MarkerSize', 10, 'LineWidth', 2);
+legend('Real System', 'PBSIDopt');
+xlabel('Re'); ylabel('Im');
+title('Eigenvalues Comparison');
+axis equal; grid on;
+
+% 1) Crea i modelli SS discreti (assicurati di passare Ts)
+sys_estimated = ss(Ai, Bi, Ci, Di, Ts);
+sys_true      = ss(A,    B,    C,    D,    Ts);
+sys_est_delft = 
+
+
+figure;
+bode(sys_estimated, sys_true, sys_est_delft);
+grid on;
+legend('PBSIDopt','Real System', 'PBSID (Delft)');
+title('Bode Comparison');
+
+%% STRUCTURING METHOD (hinfstruct):
+
+
+% PBSID stimato già riportato in continuo
+I = eye(size(A_id));
+A_est_c = (I - inv(A_id)) / Ts;
+B_est_c = inv(A_id) * B_id / Ts;
+C_est_c = C_id;
+D_est_c = D_id;
+
+sys_hat_c = ss(A_est_c, B_est_c, C_est_c, D_est_c); % identificato continuo
+sys_hat_c.InputName = 'u';
+sys_hat_c.OutputName = 'y';
+
+% Masse note
+m1 = 20; m2 = 20;
+
+% Parametri realp
+k1 = realp('k1', 800); 
+k1.Minimum = 500; k1.Maximum = 2000;
+k2 = realp('k2', 1800);  
+k2.Minimum = 1843.78;  k2.Maximum = 2500;
+d1 = realp('d1', 0.9);  
+d1.Minimum = 0.2;  d1.Maximum = 3;
+d2 = realp('d2', 4);  
+d2.Minimum = 4.87578;  d2.Maximum = 5.7678;
+
+% a1 = realp('a1', -125); a1.Minimum = -185; a1.Maximum = -115;
+% a2 = realp('a2', -0.2); a2.Minimum = -0.5;  a2.Maximum = -0.1;
+% a3 = realp('a3', 80);  a3.Minimum = 70;  a3.Maximum = 130;
+% a4 = realp('a4', 0.20);  a4.Minimum = 0.10;  a4.Maximum = 0.40;
+
+A_c = [  0,        1,         0,       0;
+       -(k1+k2)/m1, -(d1+d2)/m1, k2/m1, d2/m1;
+        0,         0,         0,       1;
+        k2/m2,     d2/m2,    -k2/m2, -d2/m2 ];
+% A_c = [  0,        1,         0,       0;
+%        a1, a2, a3, a4;
+%         0,         0,         0,       1;
+%         a3, a4, -a3, -a4];
+B_c = [0; 0; 0; 1/m2];
+C_c = [1 0 0 0];
+D_c = 0;
+
+sys_th = ss(A_c, B_c, C_c, D_c);
+sys_th.InputName = 'u';
+sys_th.OutputName = 'y';
+
+M = sys_hat_c - sys_th;  % M = errore tra modello stimato e modello strutturato
+
+opt = hinfstructOptions('Display', 'final', 'RandomStart', 10);
+[sys_opt, gamma7, info] = hinfstruct(M, opt);
+
+k1_hat = sys_opt.Blocks.k1.Value
+% k2_hat = 2*k1_hat;
+k2_hat = sys_opt.Blocks.k2.Value
+d1_hat = sys_opt.Blocks.d1.Value
+% d2_hat = 5*d1_hat;
+d2_hat = sys_opt.Blocks.d2.Value
+
+% a1_hat = sys_opt.Blocks.a1.Value;
+% a2_hat = sys_opt.Blocks.a2.Value;
+% a3_hat = sys_opt.Blocks.a3.Value;
+% a4_hat = sys_opt.Blocks.a4.Value;
+
+A_hat = [  0,        1,         0,       0;
+       -(k1_hat+k2_hat)/m1, -(d1_hat+d2_hat)/m1, k2_hat/m1, d2_hat/m1;
+        0,         0,         0,       1;
+        k2_hat/m2,     d2_hat/m2,    -k2_hat/m2, -d2_hat/m2 ];
+% A_hat = [  0,        1,         0,       0;
+%         a1_hat, a2_hat, a3_hat, a4_hat;
+%         0,         0,         0,       1;
+%         a3_hat, a4_hat, -a3_hat, -a4_hat];
+B_hat = [0; 0; 0; 1/m2];
+C_hat = [1 0 0 0];
+D_hat = 0;
+
+
+
+%%
+
+sys_real_c  = ss(Ac, Bc, Cc, Dc);
+sys_hat = ss(A_hat, B_hat, C_hat, D_hat);
+
+% bode(sys_real_c, sys_id_c), legend('Reale','Identificato continuo')
+figure()
+bode(sys_real_c, sys_hat), legend('Reale','Identificato')
